@@ -5,6 +5,7 @@ import Registro from "./pages/Registro";
 import MenuPracticante from "./pages/MenuPracticante";
 import DetallesAtencion from "./pages/DetallesAtencion";
 import Historial from "./pages/Historial";
+import Creditos from "./pages/Creditos";
 
 
 
@@ -24,6 +25,7 @@ function AnimatedRoutes() {
         <Route path="/menu-practicante" element={<MenuPracticante />} />
         <Route path="/detalles-atencion" element={<DetallesAtencion />} />
         <Route path="/historial" element={<Historial />} />
+        <Route path="/creditos" element={<Creditos />} />
       </Routes>
     </div>
   );
