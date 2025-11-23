@@ -6,6 +6,12 @@ import MenuPracticante from "./pages/MenuPracticante";
 import DetallesAtencion from "./pages/DetallesAtencion";
 import Historial from "./pages/Historial";
 import Creditos from "./pages/Creditos";
+// Pantallas del Supervisor
+import MenuSupervisor from "./pages/MenuSupervisor";
+import ListaPracticantes from "./pages/ListaPracticantes";
+import ConsultasPracticante from "./pages/ConsultasPracticante";
+import DetalleConsulta from "./pages/DetalleConsulta";
+import Retroalimentacion from "./pages/Retroalimentacion";
 
 
 
@@ -26,6 +32,12 @@ function AnimatedRoutes() {
         <Route path="/detalles-atencion" element={<DetallesAtencion />} />
         <Route path="/historial" element={<Historial />} />
         <Route path="/creditos" element={<Creditos />} />
+        {/* Rutas del Supervisor */}
+        <Route path="/menu-supervisor" element={<MenuSupervisor />} />
+        <Route path="/lista-practicantes" element={<ListaPracticantes />} />
+        <Route path="/consultas-practicante" element={<ConsultasPracticante />} />
+        <Route path="/detalle-consulta" element={<DetalleConsulta />} />
+        <Route path="/retroalimentacion" element={<Retroalimentacion />} />
       </Routes>
     </div>
   );
