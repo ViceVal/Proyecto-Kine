@@ -11,7 +11,7 @@ export default function Login() {
         backgroundRepeat: "no-repeat"
       }}
     >
-      {/* HEADER MORADO a */}
+      {/* HEADER MORADO probando */}
       <div className="w-full bg-[#D2C9FF] py-6 text-center shadow">
         <h2 className="text-gray-800 text-lg font-semibold">¡Bienvenido!</h2>
       </div>
