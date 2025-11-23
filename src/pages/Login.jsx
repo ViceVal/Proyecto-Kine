@@ -1,6 +1,9 @@
-import textura from "../assets/TexturaHQ.png"; // fondo
+import { useNavigate } from "react-router-dom";
+import textura from "../assets/TexturaHQ.png";
 
 export default function Login() {
+  const navigate = useNavigate();
+
   return (
     <div
       className="min-h-screen w-full flex flex-col"
@@ -8,33 +11,58 @@ export default function Login() {
         backgroundImage: `url(${textura})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
-        backgroundRepeat: "no-repeat"
       }}
     >
-      {/* HEADER MORADO probando */}
-      <div className="w-full bg-[#D2C9FF] py-6 text-center shadow">
-        <h2 className="text-gray-800 text-lg font-semibold">¡Bienvenido!</h2>
-      </div>
+      {/* HEADER */}
+      <div className="relative w-full bg-[#D2C9FF] py-6 text-center shadow">
+        {/* Flecha atrás */}
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute left-4 top-1/2 -translate-y-1/2 text-black text-2xl"
+        >
+          ←
+        </button>
 
-      {/* CONTENIDO CENTRAL */}
-      <div className="flex-1 flex flex-col items-center justify-center">
-
-        {/* Título KineApp */}
-        <h1 className="text-6xl font-bold text-gray-900 mb-16">
-          KineApp
-        </h1>
-
-        {/* Botón Iniciar Sesión */}
-        <button className="w-72 py-3 bg-[#1E6176] text-white text-lg font-semibold rounded-xl shadow-md mb-6 active:scale-95 transition">
+        <h2 className="text-gray-800 text-xl font-semibold">
           Iniciar Sesión
-        </button>
-
-        {/* Botón Registrarse */}
-        <button className="w-72 py-3 bg-white text-[#1E6176] border-2 border-[#1E6176] text-lg font-semibold rounded-xl shadow-md active:scale-95 transition">
-          Registrarse
-        </button>
+        </h2>
       </div>
 
+      {/* CONTENIDO */}
+      <div className="flex-1 flex flex-col items-center px-6 pt-10">
+
+        {/* TÍTULO "Ingrese sus datos" */}
+        <h3 className="text-xl font-semibold text-gray-800 mb-6">
+          Ingrese sus datos
+        </h3>
+
+        {/* INPUT: Correo institucional */}
+        <input
+          type="email"
+          placeholder="Correo institucional"
+          className="w-full max-w-xs bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-800 shadow-sm mb-4"
+        />
+
+        {/* INPUT: Contraseña */}
+        <input
+          type="password"
+          placeholder="Contraseña"
+          className="w-full max-w-xs bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-800 shadow-sm mb-2"
+        />
+
+        {/* Olvidé la contraseña */}
+        <button
+          className="text-[#1E6176] font-semibold underline mb-8 text-sm"
+        >
+          Olvidé la contraseña
+        </button>
+
+        {/* BOTÓN ACCEDER */}
+        <button className="w-full max-w-xs py-3 bg-[#1E6176] text-white text-lg font-semibold rounded-xl shadow-md active:scale-95 transition">
+          Acceder
+        </button>
+
+      </div>
     </div>
   );
 }
