@@ -58,7 +58,9 @@ export default function Login() {
         </button>
 
         {/* BOTÓN ACCEDER */}
-        <button className="w-full max-w-xs py-3 bg-[#1E6176] text-white text-lg font-semibold rounded-xl shadow-md active:scale-95 transition">
+        <button className="w-full max-w-xs py-3 bg-[#1E6176] text-white text-lg font-semibold rounded-xl shadow-md active:scale-95 transition"
+          onClick={() => navigate("/menu-practicante")}
+        >
           Acceder
         </button>
 

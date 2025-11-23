@@ -37,6 +37,7 @@ export default function Bienvenido() {
 
         {/* Botón Registrarse */}
         <button
+          onClick={() => navigate("/registro")}
           className="w-72 py-3 bg-white text-[#1E6176] border-2 border-[#1E6176] text-lg font-semibold rounded-xl shadow-md active:scale-95 transition"
         >
           Registrarse
