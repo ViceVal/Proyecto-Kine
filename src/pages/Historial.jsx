@@ -6,7 +6,6 @@ export default function Historial() {
   const navigate = useNavigate();
   const [vista, setVista] = useState("lista");
 
-  // Datos de ejemplo (solo para visual; puedes conectar luego lo real)
   const historial = [
     {
       fecha: "12/03/2025",
@@ -40,21 +39,25 @@ export default function Historial() {
         backgroundPosition: "center",
       }}
     >
-      {/* HEADER */}
-      <div className="relative w-full bg-[#B3CCFA] py-6 text-center shadow-md">
+      {/* HEADER estilo KineApp */}
+      <div className="relative w-full bg-[#B3CCFA] py-6 text-center shadow">
+
+        {/* Flecha atrás */}
         <button
           onClick={() => navigate(-1)}
-          className="absolute left-5 top-1/2 -translate-y-1/2 text-black text-2xl"
+          className="absolute left-4 top-1/2 -translate-y-1/2 text-black text-2xl"
         >
           ←
         </button>
 
-        <h2 className="text-gray-800 text-xl font-semibold">Historial</h2>
+        {/* Título y subtítulo */}
+        <h1 className="text-3xl font-bold text-gray-900 mb-1">KineApp</h1>
+        <h2 className="text-gray-700 text-sm font-semibold">Historial</h2>
 
-        {/* botón cambiar vista */}
+        {/* Botón cambiar vista */}
         <button
           onClick={() => setVista(vista === "lista" ? "grid" : "lista")}
-          className="absolute right-5 top-1/2 -translate-y-1/2 text-black text-2xl"
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-black text-2xl"
         >
           ▦
         </button>
@@ -63,25 +66,19 @@ export default function Historial() {
       {/* CONTENIDO */}
       <div className="flex-1 px-6 pt-4 overflow-y-auto pb-8">
 
-        {/* ------------------ LISTA ------------------ */}
+        {/* LISTA */}
         {vista === "lista" && (
           <div className="flex flex-col gap-6">
             {historial.map((item, index) => (
               <div key={index}>
-                {/* fecha y hora */}
                 <h3 className="text-lg font-semibold text-gray-900">
                   {item.fecha}
                 </h3>
                 <p className="text-gray-600 -mt-1 mb-2">{item.hora}</p>
 
-                {/* CAJA DE INFORMACIÓN */}
                 <div className="bg-white/80 rounded-xl p-4 shadow space-y-1">
-                  <p className="text-gray-900 font-bold">
-                    {item.tipo}
-                  </p>
-                  <p className="text-gray-600 text-sm">
-                    {item.procedimiento}
-                  </p>
+                  <p className="text-gray-900 font-bold">{item.tipo}</p>
+                  <p className="text-gray-600 text-sm">{item.procedimiento}</p>
                   <p className="text-gray-600 text-sm">
                     <span className="font-semibold">Módulo:</span> {item.modulo}
                   </p>
@@ -91,7 +88,7 @@ export default function Historial() {
           </div>
         )}
 
-        {/* ------------------ GRID ------------------ */}
+        {/* GRID */}
         {vista === "grid" && (
           <div className="grid grid-cols-2 gap-4">
             {historial.map((item, index) => (

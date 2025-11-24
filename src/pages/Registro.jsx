@@ -15,6 +15,7 @@ export default function Registro() {
     >
       {/* HEADER */}
       <div className="relative w-full bg-[#B3CCFA] py-6 text-center shadow">
+
         {/* Flecha atrás */}
         <button
           onClick={() => navigate(-1)}
@@ -23,9 +24,9 @@ export default function Registro() {
           ←
         </button>
 
-        <h2 className="text-gray-800 text-xl font-semibold">
-          Registrate
-        </h2>
+        {/* Título y subtítulo */}
+        <h1 className="text-3xl font-bold text-gray-900 mb-1">KineApp</h1>
+        <h2 className="text-gray-700 text-sm font-semibold">Registro</h2>
       </div>
 
       {/* CONTENIDO */}
@@ -66,7 +67,7 @@ export default function Registro() {
           className="w-full max-w-md bg-white border border-gray-300 rounded-xl px-4 py-3 shadow-sm mb-4 text-gray-800"
         />
 
-        {/* Numero de contacto */}
+        {/* Número de contacto */}
         <input
           type="tel"
           placeholder="Número de contacto"

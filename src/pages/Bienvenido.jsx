@@ -14,17 +14,17 @@ export default function Bienvenido() {
       }}
     >
       {/* HEADER */}
-      <div className="w-full bg-[#B3CCFA] py-6 text-center shadow">
-        <h2 className="text-gray-800 text-lg font-semibold">¡Bienvenido!</h2>
+      <div className="relative w-full bg-[#B3CCFA] py-6 text-center shadow">
+        <h1 className="text-3xl font-bold text-gray-900 mb-1">KineApp</h1>
+        <h2 className="text-gray-700 text-sm font-semibold">Bienvenido</h2>
       </div>
 
       {/* CONTENIDO CENTRAL */}
       <div className="flex-1 flex flex-col items-center justify-center px-6">
 
-        {/* CONTENEDOR BLANCO (mismo estilo que otros menús) */}
+        {/* CONTENEDOR BLANCO */}
         <div className="bg-white/90 rounded-2xl shadow-lg p-10 w-full max-w-md text-center">
 
-          {/* Título dentro del contenedor */}
           <h1 className="text-4xl font-bold text-gray-900 mb-10">
             KineApp
           </h1>

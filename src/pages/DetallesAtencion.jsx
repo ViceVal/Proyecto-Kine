@@ -12,7 +12,6 @@ import "react-clock/dist/Clock.css";
 
 export default function DetallesAtencion() {
   const navigate = useNavigate();
-
   const [fecha, setFecha] = useState(null);
   const [hora, setHora] = useState("20:00");
 
@@ -25,8 +24,10 @@ export default function DetallesAtencion() {
         backgroundPosition: "center",
       }}
     >
-      {/* HEADER */}
-      <div className="relative w-full bg-[#D2C9FF] py-6 text-center shadow">
+      {/* HEADER (unificado estilo KineApp) */}
+      <div className="relative w-full bg-[#B3CCFA] py-6 text-center shadow">
+
+        {/* Flecha atrás */}
         <button
           onClick={() => navigate(-1)}
           className="absolute left-4 top-1/2 -translate-y-1/2 text-black text-2xl"
@@ -34,7 +35,9 @@ export default function DetallesAtencion() {
           ←
         </button>
 
-        <h2 className="text-gray-800 text-xl font-semibold">
+        {/* Título y subtítulo */}
+        <h1 className="text-3xl font-bold text-gray-900 mb-1">KineApp</h1>
+        <h2 className="text-gray-700 text-sm font-semibold">
           Detalles Atención
         </h2>
       </div>
@@ -42,9 +45,9 @@ export default function DetallesAtencion() {
       {/* CONTENIDO */}
       <div className="flex-1 px-6 pt-6">
 
-        {/* ---------------- HORA DE ATENCIÓN ---------------- */}
+        {/* ---------------- HORA DE LA CITA ---------------- */}
         <h3 className="text-lg font-semibold text-gray-800 mb-2 text-center">
-          Hora de atención
+          Hora de la cita
         </h3>
 
         <div className="bg-[#D2C9FF] rounded-2xl p-4 mb-6 shadow-md overflow-visible relative">
