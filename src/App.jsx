@@ -14,8 +14,6 @@ import DetalleConsulta from "./pages/DetalleConsulta";
 import Retroalimentacion from "./pages/Retroalimentacion";
 
 
-
-
 function AnimatedRoutes() {
   const location = useLocation();
 
@@ -28,12 +26,12 @@ function AnimatedRoutes() {
         <Route path="/" element={<Bienvenido />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
-        <Route path="/menu-practicante" element={<MenuPracticante />} />
+        <Route path="/practicante/menu" element={<MenuPracticante />} />
         <Route path="/detalles-atencion" element={<DetallesAtencion />} />
         <Route path="/historial" element={<Historial />} />
         <Route path="/creditos" element={<Creditos />} />
         {/* Rutas del Supervisor */}
-        <Route path="/menu-supervisor" element={<MenuSupervisor />} />
+        <Route path="/supervisor/menu" element={<MenuSupervisor />} />
         <Route path="/lista-practicantes" element={<ListaPracticantes />} />
         <Route path="/consultas-practicante" element={<ConsultasPracticante />} />
         <Route path="/detalle-consulta" element={<DetalleConsulta />} />

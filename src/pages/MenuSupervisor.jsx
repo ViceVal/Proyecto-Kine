@@ -1,11 +1,11 @@
 /**
  * MenuSupervisor.jsx
  * Pantalla principal del supervisor de kinesiología
- * 
+ *
  * Funcionalidad:
  * - Muestra mensaje de bienvenida personalizado con nombre del supervisor
  * - Botones para agenda, cierre de sesión y registro
- * 
+ *
  * @author Joshua
  * @date Noviembre 2025
  */
@@ -15,7 +15,7 @@ import textura from "../assets/TexturaHQ.png";
 
 export default function MenuSupervisor() {
   const navigate = useNavigate();
-
+  
   // Datos del supervisor (se reemplazará con datos reales)
   const nombreSupervisor = "Daniela";
   const apellidoSupervisor = "Villanueva";
@@ -50,13 +50,13 @@ export default function MenuSupervisor() {
           </p>
         </div>
 
-        {/* CONTENEDOR DE LOS 3 BOTONES */}
+        {/* CONTENEDOR DE LOS BOTONES */}
         <div className="bg-white/90 rounded-2xl shadow-md p-6 w-full max-w-md space-y-4">
 
           {/* Botón: Ver agenda de practicantes */}
           <button
             onClick={() => navigate("/lista-practicantes")}
-            className="w-full py-4 bg-[#1E6176] text-white text-lg font-semibold 
+            className="w-full py-4 bg-[#1E6176] text-white text-lg font-semibold
                        rounded-xl shadow-md hover:bg-[#164d5e] active:scale-95 transition"
           >
             Ver Agenda de Practicantes
@@ -65,8 +65,8 @@ export default function MenuSupervisor() {
           {/* Botón: Registrar */}
           <button
             onClick={() => navigate("/registro")}
-            className="w-full py-4 bg-white text-[#1E6176] border-2 border-[#1E6176] 
-                       text-lg font-semibold rounded-xl shadow-md 
+            className="w-full py-4 bg-white text-[#1E6176] border-2 border-[#1E6176]
+                       text-lg font-semibold rounded-xl shadow-md
                        hover:bg-[#f0faff] active:scale-95 transition"
           >
             Registrar
@@ -75,7 +75,7 @@ export default function MenuSupervisor() {
           {/* Botón: Cerrar sesión */}
           <button
             onClick={() => navigate("/login")}
-            className="w-full py-4 bg-gray-600 text-white text-lg font-semibold 
+            className="w-full py-4 bg-gray-600 text-white text-lg font-semibold
                        rounded-xl shadow-md hover:bg-gray-700 active:scale-95 transition"
           >
             Cerrar Sesión
