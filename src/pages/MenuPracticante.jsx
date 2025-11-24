@@ -4,7 +4,7 @@ import textura from "../assets/TexturaHQ.png";
 export default function MenuPracticante() {
   const navigate = useNavigate();
 
-  // Esto luego se reemplaza con datos reales del usuario
+  // Datos del practicante (luego se reemplaza por data real)
   const nombre = "Nombre";
   const apellido = "Apellido";
 
@@ -18,48 +18,58 @@ export default function MenuPracticante() {
       }}
     >
       {/* HEADER */}
-      <div className="relative w-full bg-[#D2C9FF] py-6 text-center shadow">
-        <h2 className="text-gray-800 text-lg font-semibold">
-          Menu practicante
+      <div className="relative w-full bg-[#B3CCFA] py-4 text-center shadow">
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">KineApp</h1>
+        <h2 className="text-gray-700 text-sm font-semibold">
+          Menú Practicante
         </h2>
       </div>
 
       {/* CONTENIDO */}
-      <div className="flex-1 flex flex-col items-center px-6 pt-10">
+      <div className="flex-1 flex flex-col items-center justify-center px-6">
 
-        {/* Texto de bienvenida */}
-        <h3 className="text-xl font-semibold text-gray-900 mb-8 text-center">
-          ¡Bienvenido {nombre} {apellido}!
-        </h3>
+        {/* Caja de bienvenida */}
+        <div className="bg-white/90 rounded-2xl shadow-lg p-8 w-full max-w-md mb-8 text-center">
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">
+            ¡Bienvenido/a!
+          </h3>
+          <p className="text-lg text-gray-700">
+            {nombre} {apellido}
+          </p>
+        </div>
 
-        {/* Contenedor blanco alrededor de los botones */}
-        <div className="bg-white/90 rounded-2xl shadow-md p-6 w-full max-w-sm mb-8">
+        {/* CONTENEDOR DE LOS 3 BOTONES ✔ igual al Supervisor */}
+        <div className="bg-white/90 rounded-2xl shadow-md p-6 w-full max-w-md space-y-4">
 
-          {/* Botón: Ingresar paciente */}
+          {/* PRIMER BOTÓN: IGUAL AL "Ver Agenda…" del supervisor */}
           <button
             onClick={() => navigate("/detalles-atencion")}
-            className="w-full py-3 bg-[#1E6176] text-white text-lg font-semibold rounded-xl shadow-md active:scale-95 transition mb-4"
+            className="w-full py-4 bg-[#1E6176] text-white text-lg font-semibold 
+                       rounded-xl shadow-md hover:bg-[#164d5e] active:scale-95 transition"
           >
             Ingresar paciente
           </button>
 
-          {/* Botón: Ver historial */}
+          {/* SEGUNDO BOTÓN: IGUAL AL "Registrar" del supervisor */}
           <button
             onClick={() => navigate("/historial")}
-            className="w-full py-3 bg-[#1E6176] text-white text-lg font-semibold rounded-xl shadow-md active:scale-95 transition"
+            className="w-full py-4 bg-white text-[#1E6176] border-2 border-[#1E6176] 
+                       text-lg font-semibold rounded-xl shadow-md 
+                       hover:bg-[#f0faff] active:scale-95 transition"
           >
             Ver historial
           </button>
 
-        </div>
+          {/* TERCER BOTÓN: IGUAL AL "Cerrar Sesión" del supervisor */}
+          <button
+            onClick={() => navigate("/login")}
+            className="w-full py-4 bg-gray-600 text-white text-lg font-semibold 
+                       rounded-xl shadow-md hover:bg-gray-700 active:scale-95 transition"
+          >
+            Cerrar Sesión
+          </button>
 
-        {/* Cerrar sesión */}
-        <button
-          onClick={() => navigate("/")}
-          className="text-[#1E6176] font-semibold underline text-sm"
-        >
-          Cerrar Sesión
-        </button>
+        </div>
 
       </div>
     </div>

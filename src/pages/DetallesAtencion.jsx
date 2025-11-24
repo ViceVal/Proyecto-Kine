@@ -67,7 +67,7 @@ export default function DetallesAtencion() {
           Fecha de atención
         </h3>
 
-        <div className="bg-[#D2C9FF] rounded-2xl p-4 mb-6 shadow-md">
+        <div className="bg-[#B3CCFA] rounded-2xl p-4 mb-6 shadow-md">
           <label className="text-white font-semibold ml-1">Fecha</label>
 
           <div className="bg-white border-2 border-purple-600 rounded-xl px-3 py-2 shadow-sm">

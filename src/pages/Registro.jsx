@@ -14,7 +14,7 @@ export default function Registro() {
       }}
     >
       {/* HEADER */}
-      <div className="relative w-full bg-[#D2C9FF] py-6 text-center shadow">
+      <div className="relative w-full bg-[#B3CCFA] py-6 text-center shadow">
         {/* Flecha atrás */}
         <button
           onClick={() => navigate(-1)}

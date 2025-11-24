@@ -4,10 +4,9 @@
  * 
  * Funcionalidad:
  * - Muestra mensaje de bienvenida personalizado con nombre del supervisor
- * - Botón para acceder a la agenda de practicantes
- * - Botón para cerrar sesión y volver al login
+ * - Botones para agenda, cierre de sesión y registro
  * 
- * @author Joshua - Frontend Supervisor
+ * @author Joshua
  * @date Noviembre 2025
  */
 
@@ -31,7 +30,7 @@ export default function MenuSupervisor() {
       }}
     >
       {/* HEADER */}
-      <div className="relative w-full bg-[#D2C9FF] py-4 text-center shadow">
+      <div className="relative w-full bg-[#B3CCFA] py-4 text-center shadow">
         <h1 className="text-2xl font-bold text-gray-900 mb-1">KineApp</h1>
         <h2 className="text-gray-700 text-sm font-semibold">
           Menú Supervisor
@@ -51,24 +50,37 @@ export default function MenuSupervisor() {
           </p>
         </div>
 
-        {/* Contenedor de botones */}
+        {/* CONTENEDOR DE LOS 3 BOTONES */}
         <div className="bg-white/90 rounded-2xl shadow-md p-6 w-full max-w-md space-y-4">
 
           {/* Botón: Ver agenda de practicantes */}
           <button
             onClick={() => navigate("/lista-practicantes")}
-            className="w-full py-4 bg-[#1E6176] text-white text-lg font-semibold rounded-xl shadow-md hover:bg-[#164d5e] active:scale-95 transition"
+            className="w-full py-4 bg-[#1E6176] text-white text-lg font-semibold 
+                       rounded-xl shadow-md hover:bg-[#164d5e] active:scale-95 transition"
           >
-            📋 Ver Agenda de Practicantes
+            Ver Agenda de Practicantes
+          </button>
+
+          {/* Botón: Registrar */}
+          <button
+            onClick={() => navigate("/registro")}
+            className="w-full py-4 bg-white text-[#1E6176] border-2 border-[#1E6176] 
+                       text-lg font-semibold rounded-xl shadow-md 
+                       hover:bg-[#f0faff] active:scale-95 transition"
+          >
+            Registrar
           </button>
 
           {/* Botón: Cerrar sesión */}
           <button
             onClick={() => navigate("/login")}
-            className="w-full py-4 bg-gray-600 text-white text-lg font-semibold rounded-xl shadow-md hover:bg-gray-700 active:scale-95 transition"
+            className="w-full py-4 bg-gray-600 text-white text-lg font-semibold 
+                       rounded-xl shadow-md hover:bg-gray-700 active:scale-95 transition"
           >
-            🚪 Cerrar Sesión
+            Cerrar Sesión
           </button>
+          
         </div>
 
         {/* Información adicional */}
@@ -77,6 +89,7 @@ export default function MenuSupervisor() {
             Supervisión y retroalimentación de prácticas
           </p>
         </div>
+
       </div>
     </div>
   );

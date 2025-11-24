@@ -14,7 +14,7 @@ export default function Login() {
       }}
     >
       {/* HEADER */}
-      <div className="relative w-full bg-[#D2C9FF] py-6 text-center shadow">
+      <div className="relative w-full bg-[#B3CCFA] py-6 text-center shadow">
         {/* Flecha atrás */}
         <button
           onClick={() => navigate(-1)}
@@ -29,41 +29,44 @@ export default function Login() {
       </div>
 
       {/* CONTENIDO */}
-      <div className="flex-1 flex flex-col items-center px-6 pt-10">
+      <div className="flex-1 flex flex-col items-center justify-center px-6">
 
-        {/* TÍTULO "Ingrese sus datos" */}
-        <h3 className="text-xl font-semibold text-gray-800 mb-6">
-          Ingrese sus datos
-        </h3>
+        {/* CONTENEDOR BLANCO (igual estilo al resto de menús) */}
+        <div className="bg-white/90 rounded-2xl shadow-lg p-10 w-full max-w-md text-center">
 
-        {/* INPUT: Correo institucional */}
-        <input
-          type="email"
-          placeholder="Correo institucional"
-          className="w-full max-w-xs bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-800 shadow-sm mb-4"
-        />
+          {/* TÍTULO */}
+          <h3 className="text-xl font-semibold text-gray-800 mb-6">
+            Ingrese sus datos
+          </h3>
 
-        {/* INPUT: Contraseña */}
-        <input
-          type="password"
-          placeholder="Contraseña"
-          className="w-full max-w-xs bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-800 shadow-sm mb-2"
-        />
+          {/* INPUT: Correo institucional */}
+          <input
+            type="email"
+            placeholder="Correo institucional"
+            className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-800 shadow-sm mb-4"
+          />
 
-        {/* Olvidé la contraseña */}
-        <button
-          className="text-[#1E6176] font-semibold underline mb-8 text-sm"
-        >
-          Olvidé la contraseña
-        </button>
+          {/* INPUT: Contraseña */}
+          <input
+            type="password"
+            placeholder="Contraseña"
+            className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-800 shadow-sm mb-2"
+          />
 
-        {/* BOTÓN ACCEDER */}
-        <button className="w-full max-w-xs py-3 bg-[#1E6176] text-white text-lg font-semibold rounded-xl shadow-md active:scale-95 transition"
-          onClick={() => navigate("/menu-practicante")}
-        >
-          Acceder
-        </button>
+          {/* Olvidé la contraseña */}
+          <button className="text-[#1E6176] font-semibold underline mb-8 text-sm">
+            Olvidé la contraseña
+          </button>
 
+          {/* BOTÓN ACCEDER */}
+          <button
+            onClick={() => navigate("/menu-practicante")}
+            className="w-full py-4 bg-[#1E6176] text-white text-lg font-semibold 
+                       rounded-xl shadow-md hover:bg-[#164d5e] active:scale-95 transition"
+          >
+            Acceder
+          </button>
+        </div>
       </div>
     </div>
   );

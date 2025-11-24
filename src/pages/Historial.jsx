@@ -41,7 +41,7 @@ export default function Historial() {
       }}
     >
       {/* HEADER */}
-      <div className="relative w-full bg-[#D2C9FF] py-6 text-center shadow-md">
+      <div className="relative w-full bg-[#B3CCFA] py-6 text-center shadow-md">
         <button
           onClick={() => navigate(-1)}
           className="absolute left-5 top-1/2 -translate-y-1/2 text-black text-2xl"
