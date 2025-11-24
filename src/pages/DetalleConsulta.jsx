@@ -125,7 +125,7 @@ export default function DetalleConsulta() {
           onClick={handleEnviarCorreccion}
           className="w-full py-4 bg-[#1E6176] text-white text-lg font-semibold rounded-xl shadow-md hover:bg-[#164d5e] active:scale-95 transition"
         >
-          {consulta.retroalimentacion ? "✏️ Editar Corrección" : "📝 Enviar Corrección"}
+          {consulta.retroalimentacion ? "✏️ Editar Corrección" : "📝 Enviar Retroalimentación"}
         </button>
 
         {/* Información adicional */}
