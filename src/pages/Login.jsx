@@ -39,10 +39,10 @@ export default function Login() {
             Ingrese sus datos
           </h3>
 
-          {/* INPUT: Correo institucional */}
+          {/* INPUT: Usuario */}
           <input
-            type="email"
-            placeholder="Correo institucional"
+            type="text"
+            placeholder="Usuario"
             className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-800 shadow-sm mb-4"
           />
 
@@ -50,21 +50,28 @@ export default function Login() {
           <input
             type="password"
             placeholder="Contraseña"
-            className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-800 shadow-sm mb-2"
+            className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-800 shadow-sm mb-4"
           />
 
-          {/* Olvidé la contraseña */}
-          <button className="text-[#1E6176] font-semibold underline mb-8 text-sm">
-            Olvidé la contraseña
-          </button>
+          {/* CHECKBOX: Mantener sesión */}
+          <div className="flex items-center mb-6">
+            <input
+              type="checkbox"
+              id="keepLoggedIn"
+              className="w-4 h-4 text-[#1E6176] rounded focus:ring-[#1E6176]"
+            />
+            <label htmlFor="keepLoggedIn" className="ml-2 text-gray-700">
+              Mantener sesión iniciada
+            </label>
+          </div>
 
           {/* BOTÓN ACCEDER */}
           <button
-            onClick={() => navigate("/menu-practicante")}
-            className="w-full py-4 bg-[#1E6176] text-white text-lg font-semibold 
+            onClick={() => navigate("/practicante/menu")}
+            className="w-full py-4 bg-[#1E6176] text-white text-lg font-semibold
                        rounded-xl shadow-md hover:bg-[#164d5e] active:scale-95 transition"
           >
-            Acceder
+            Iniciar sesión
           </button>
         </div>
       </div>
