@@ -25,5 +25,8 @@ android/
 node_modules/
 capacitor.config.json
 *.sw?
-.vscode
+node_modules/
+dist/
 backend_changes/
+android/
+.vscode/

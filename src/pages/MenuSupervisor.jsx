@@ -17,8 +17,8 @@ export default function MenuSupervisor() {
   const navigate = useNavigate();
   
   // Datos del supervisor (se reemplazará con datos reales)
-  const nombreSupervisor = "Dra. María";
-  const apellidoSupervisor = "González";
+  const nombreSupervisor = "Daniela";
+  const apellidoSupervisor = "Villanueva";
 
   return (
     <div
