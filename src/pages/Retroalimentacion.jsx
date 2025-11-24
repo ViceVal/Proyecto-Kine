@@ -103,7 +103,7 @@ export default function Retroalimentacion() {
       }}
     >
       {/* HEADER */}
-      <div className="relative w-full bg-[#D2C9FF] py-4 text-center shadow">
+      <div className="relative w-full bg-[#B3CCFA] py-4 text-center shadow">
         <button
           onClick={() => navigate(-1)}
           className="absolute left-5 top-1/2 -translate-y-1/2 text-black text-2xl"

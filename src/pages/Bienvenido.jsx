@@ -14,36 +14,35 @@ export default function Bienvenido() {
       }}
     >
       {/* HEADER */}
-      <div className="w-full bg-[#D2C9FF] py-6 text-center shadow">
+      <div className="w-full bg-[#B3CCFA] py-6 text-center shadow">
         <h2 className="text-gray-800 text-lg font-semibold">¡Bienvenido!</h2>
       </div>
 
       {/* CONTENIDO CENTRAL */}
-      <div className="flex-1 flex flex-col items-center justify-center">
-        {/* Título */}
-        <h1 className="text-6xl font-bold text-gray-900 mb-16">KineApp</h1>
+      <div className="flex-1 flex flex-col items-center justify-center px-6">
 
-        {/* Botón Iniciar Sesión */}
-        <button
-          onClick={() => navigate("/login")}
-          className="w-72 py-3 bg-[#1E6176] text-white text-lg font-semibold 
-                     rounded-xl shadow-md mb-6 active:scale-95 transition"
-        >
-          Iniciar Sesión
-        </button>
+        {/* CONTENEDOR BLANCO (mismo estilo que otros menús) */}
+        <div className="bg-white/90 rounded-2xl shadow-lg p-10 w-full max-w-md text-center">
 
-        {/* Botón Registrarse */}
-        <button
-          onClick={() => navigate("/registro")}
-          className="w-72 py-3 bg-white text-[#1E6176] border-2 border-[#1E6176] 
-                     text-lg font-semibold rounded-xl shadow-md 
-                     active:scale-95 transition mb-10"
-        >
-          Registrarse
-        </button>
+          {/* Título dentro del contenedor */}
+          <h1 className="text-4xl font-bold text-gray-900 mb-10">
+            KineApp
+          </h1>
+
+          {/* Botón Iniciar Sesión */}
+          <button
+            onClick={() => navigate("/login")}
+            className="w-full py-4 bg-[#1E6176] text-white text-lg font-semibold 
+                       rounded-xl shadow-md hover:bg-[#164d5e] active:scale-95 transition"
+          >
+            Iniciar Sesión
+          </button>
+
+        </div>
+
       </div>
 
-      {/* BOTÓN CRÉDITOS: cuadrado, color del header, icono dentro */}
+      {/* BOTÓN CRÉDITOS */}
       <button
         onClick={() => navigate("/creditos")}
         className="absolute bottom-6 right-6 bg-[#D2C9FF] 

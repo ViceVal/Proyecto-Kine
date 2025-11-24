@@ -23,7 +23,7 @@ export default function Creditos() {
       }}
     >
       {/* HEADER */}
-      <div className="relative w-full bg-[#D2C9FF] py-6 text-center shadow animate-fadeUp">
+      <div className="relative w-full bg-[#B3CCFA] py-6 text-center shadow animate-fadeUp">
         <button
           onClick={() => navigate(-1)}
           className="absolute left-4 top-1/2 -translate-y-1/2 text-black text-2xl"
