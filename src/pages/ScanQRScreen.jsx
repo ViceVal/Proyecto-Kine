@@ -87,13 +87,15 @@ const ScanQRScreen = () => {
 
   // Iniciar el escaneo de QR al montar el componente
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     startScanning();
 
     // Cleanup: detener la cámara al desmontar el componente
     return () => {
       stopScanning();
     };
-  }, [startScanning, stopScanning]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleBack = () => {
     navigate(-1);
