@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Html5Qrcode } from 'html5-qrcode';
 import { scanQR } from '../services/assistanceService';
@@ -10,17 +10,54 @@ const ScanQRScreen = () => {
   const navigate = useNavigate();
   const html5QrCodeRef = useRef(null);
 
-  // Iniciar el escaneo de QR al montar el componente
-  useEffect(() => {
-    startScanning();
+  const onScanSuccess = useCallback(async (decodedText) => {
+    console.log('QR Code escaneado:', decodedText);
+    setResult(decodedText);
 
-    // Cleanup: detener la cámara al desmontar el componente
-    return () => {
-      stopScanning();
-    };
+    // Detener el escaneo
+    if (html5QrCodeRef.current) {
+      try {
+        await html5QrCodeRef.current.stop();
+        html5QrCodeRef.current = null;
+      } catch (err) {
+        console.error('Error al detener la cámara:', err);
+      }
+    }
+    setScanning(false);
+
+    // Procesar el QR escaneado
+    try {
+      const practicanteId = 'practicante_001'; // En una implementación real, esto vendría de la sesión
+      const response = await scanQR(decodedText, practicanteId);
+
+      if (response.success) {
+        // Redirigir a la pantalla de verificación de asistencia
+        navigate('/verificar-asistencia', { state: { paciente: response.paciente } });
+      } else {
+        setError('Error al procesar el QR: ' + response.message);
+      }
+    } catch (err) {
+      console.error('Error al procesar el QR:', err);
+      setError('Error al procesar el QR');
+    }
+  }, [navigate]);
+
+  const onScanError = useCallback(() => {
+    // Este error se dispara continuamente mientras escanea, no es necesario mostrarlo
   }, []);
 
-  const startScanning = async () => {
+  const stopScanning = useCallback(async () => {
+    if (html5QrCodeRef.current && scanning) {
+      try {
+        await html5QrCodeRef.current.stop();
+        html5QrCodeRef.current = null;
+      } catch (err) {
+        console.error('Error al detener la cámara:', err);
+      }
+    }
+  }, [scanning]);
+
+  const startScanning = useCallback(async () => {
     try {
       setScanning(true);
       setError(null);
@@ -46,48 +83,17 @@ const ScanQRScreen = () => {
       setError('No se pudo acceder a la cámara. Por favor, verifica los permisos.');
       setScanning(false);
     }
-  };
+  }, [onScanSuccess, onScanError]);
 
-  const stopScanning = async () => {
-    if (html5QrCodeRef.current && scanning) {
-      try {
-        await html5QrCodeRef.current.stop();
-        html5QrCodeRef.current = null;
-      } catch (err) {
-        console.error('Error al detener la cámara:', err);
-      }
-    }
-  };
+  // Iniciar el escaneo de QR al montar el componente
+  useEffect(() => {
+    startScanning();
 
-  const onScanSuccess = async (decodedText, decodedResult) => {
-    console.log('QR Code escaneado:', decodedText);
-    setResult(decodedText);
-
-    // Detener el escaneo
-    await stopScanning();
-    setScanning(false);
-
-    // Procesar el QR escaneado
-    try {
-      const practicanteId = 'practicante_001'; // En una implementación real, esto vendría de la sesión
-      const response = await scanQR(decodedText, practicanteId);
-
-      if (response.success) {
-        // Redirigir a la pantalla de verificación de asistencia
-        navigate('/verificar-asistencia', { state: { paciente: response.paciente } });
-      } else {
-        setError('Error al procesar el QR: ' + response.message);
-      }
-    } catch (err) {
-      console.error('Error al procesar el QR:', err);
-      setError('Error al procesar el QR');
-    }
-  };
-
-  const onScanError = (errorMessage) => {
-    // Este error se dispara continuamente mientras escanea, no es necesario mostrarlo
-    // console.log('Escaneando...');
-  };
+    // Cleanup: detener la cámara al desmontar el componente
+    return () => {
+      stopScanning();
+    };
+  }, [startScanning, stopScanning]);
 
   const handleBack = () => {
     navigate(-1);
