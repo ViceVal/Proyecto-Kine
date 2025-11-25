@@ -3,6 +3,7 @@ import Bienvenido from "./pages/Bienvenido";
 import Login from "./pages/Login";
 import Registro from "./pages/Registro";
 import MenuPracticante from "./pages/MenuPracticante";
+import ScanQRScreen from "./pages/ScanQRScreen";
 import DetallesAtencion from "./pages/DetallesAtencion";
 import Historial from "./pages/Historial";
 import Creditos from "./pages/Creditos";
@@ -28,6 +29,7 @@ function AnimatedRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
         <Route path="/practicante/menu" element={<MenuPracticante />} />
+        <Route path="/practicante/scan" element={<ScanQRScreen />} />
         <Route path="/detalles-atencion" element={<DetallesAtencion />} />
         <Route path="/historial" element={<Historial />} />
         <Route path="/creditos" element={<Creditos />} />
