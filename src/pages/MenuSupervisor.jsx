@@ -76,6 +76,14 @@ export default function MenuSupervisor() {
             Registrar
           </button>
 
+          {/* Botón: Generador de QR */}
+          <button
+            onClick={() => navigate("/generador-qr")}
+            className="w-full py-4 bg-[#6C5CE7] text-white text-lg font-semibold rounded-xl shadow-md hover:bg-[#5a48cc] active:scale-95 transition"
+          >
+            🔳 Generar QR para Box
+          </button>
+
           {/* Botón: Cerrar sesión */}
           <button
             onClick={handleCerrarSesion}
