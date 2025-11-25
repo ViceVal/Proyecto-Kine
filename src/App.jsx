@@ -13,6 +13,7 @@ import ListaPracticantes from "./pages/ListaPracticantes";
 import ConsultasPracticante from "./pages/ConsultasPracticante";
 import DetalleConsulta from "./pages/DetalleConsulta";
 import Retroalimentacion from "./pages/Retroalimentacion";
+import GeneradorQR from "./pages/GeneradorQR";
 
 
 function AnimatedRoutes() {
@@ -38,6 +39,7 @@ function AnimatedRoutes() {
         <Route path="/consultas-practicante" element={<ConsultasPracticante />} />
         <Route path="/detalle-consulta" element={<DetalleConsulta />} />
         <Route path="/retroalimentacion" element={<Retroalimentacion />} />
+        <Route path="/generador-qr" element={<GeneradorQR />} />
       </Routes>
     </div>
   );

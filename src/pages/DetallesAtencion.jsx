@@ -1,5 +1,5 @@
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import textura from "../assets/TexturaHQ.png";
 
 import DatePicker from "react-date-picker";
@@ -12,9 +12,27 @@ import "react-clock/dist/Clock.css";
 
 export default function DetallesAtencion() {
   const navigate = useNavigate();
-
   const [fecha, setFecha] = useState(null);
   const [hora, setHora] = useState("20:00");
+  const [moduloNumero, setModuloNumero] = useState("");
+
+  const location = useLocation();
+
+  useEffect(() => {
+    // Defensive: ensure location and URLSearchParams are available
+    if (!location) return;
+    try {
+      const search = location.search ?? (typeof window !== "undefined" ? window.location.search : "");
+      const params = new URLSearchParams(search);
+      // Prefer human-readable boxName (provided by QR generator). Fall back to boxId if needed.
+      const boxName = params.get("boxName");
+      const boxId = params.get("boxId");
+      if (boxName) setModuloNumero(boxName);
+      else if (boxId) setModuloNumero(boxId);
+    } catch (e) {
+      // ignore parsing errors
+    }
+  }, [location, setModuloNumero]);
 
   return (
     <div
@@ -25,8 +43,10 @@ export default function DetallesAtencion() {
         backgroundPosition: "center",
       }}
     >
-      {/* HEADER */}
-      <div className="relative w-full bg-[#D2C9FF] py-6 text-center shadow">
+      {/* HEADER (unificado estilo KineApp) */}
+      <div className="relative w-full bg-[#B3CCFA] py-6 text-center shadow">
+
+        {/* Flecha atrás */}
         <button
           onClick={() => navigate(-1)}
           className="absolute left-4 top-1/2 -translate-y-1/2 text-black text-2xl"
@@ -34,7 +54,9 @@ export default function DetallesAtencion() {
           ←
         </button>
 
-        <h2 className="text-gray-800 text-xl font-semibold">
+        {/* Título y subtítulo */}
+        <h1 className="text-3xl font-bold text-gray-900 mb-1">KineApp</h1>
+        <h2 className="text-gray-700 text-sm font-semibold">
           Detalles Atención
         </h2>
       </div>
@@ -42,9 +64,9 @@ export default function DetallesAtencion() {
       {/* CONTENIDO */}
       <div className="flex-1 px-6 pt-6">
 
-        {/* ---------------- HORA DE ATENCIÓN ---------------- */}
+        {/* ---------------- HORA DE LA CITA ---------------- */}
         <h3 className="text-lg font-semibold text-gray-800 mb-2 text-center">
-          Hora de atención
+          Hora de la cita
         </h3>
 
         <div className="bg-[#D2C9FF] rounded-2xl p-4 mb-6 shadow-md overflow-visible relative">
@@ -88,6 +110,8 @@ export default function DetallesAtencion() {
         </h3>
         <input
           type="text"
+          value={moduloNumero}
+          onChange={(e) => setModuloNumero(e.target.value)}
           className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 shadow-sm mb-6"
         />
 

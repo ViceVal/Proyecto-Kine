@@ -1,34 +1,45 @@
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import textura from "../assets/TexturaHQ.png";
-import { verifyAssistance } from '../services/assistanceService';
+import { verifyAssistance } from "../services/assistanceService";
 
-// Función para verificar asistencia (ejemplo de uso)
+// Función ejemplo para verificar asistencia
 const handleVerifyAssistance = async () => {
   try {
-    // En una implementación real, estos datos vendrían del contexto de la aplicación
-    const pacienteId = 'paciente_123';
-    const practicanteId = 'practicante_456';
+    const pacienteId = "paciente_123";
+    const practicanteId = "practicante_456";
     const timestamp = new Date().toISOString();
-    const notas = 'Asistencia verificada';
+    const notas = "Asistencia verificada";
     
     const response = await verifyAssistance(pacienteId, practicanteId, timestamp, notas);
     if (response.success) {
-      console.log('Asistencia verificada:', response.message);
-      // Aquí podrías actualizar el estado de la UI según sea necesario
+      console.log("Asistencia verificada:", response.message);
     } else {
-      console.error('Error al verificar asistencia:', response.message);
+      console.error("Error al verificar asistencia:", response.message);
     }
   } catch (error) {
-    console.error('Error al verificar asistencia:', error);
+    console.error("Error al verificar asistencia:", error);
   }
 };
 
 export default function MenuPracticante() {
   const navigate = useNavigate();
 
-  // Datos del practicante (luego se reemplaza por data real)
+  // Datos temporales
   const nombre = "Nombre";
   const apellido = "Apellido";
+
+  // Estado para popup de cerrar sesión
+  const [mostrarPopupLogout, setMostrarPopupLogout] = useState(false);
+
+  const handleCerrarSesion = () => {
+    setMostrarPopupLogout(true);
+  };
+
+  const confirmarCerrarSesion = () => {
+    setMostrarPopupLogout(false);
+    navigate("/login");
+  };
 
   return (
     <div
@@ -39,12 +50,11 @@ export default function MenuPracticante() {
         backgroundPosition: "center",
       }}
     >
+
       {/* HEADER */}
-      <div className="relative w-full bg-[#B3CCFA] py-4 text-center shadow">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">KineApp</h1>
-        <h2 className="text-gray-700 text-sm font-semibold">
-          Menú Practicante
-        </h2>
+      <div className="relative w-full bg-[#B3CCFA] py-6 text-center shadow">
+        <h1 className="text-3xl font-bold text-gray-900 mb-1">KineApp</h1>
+        <h2 className="text-gray-700 text-sm font-semibold">Menú Practicante</h2>
       </div>
 
       {/* CONTENIDO */}
@@ -52,18 +62,14 @@ export default function MenuPracticante() {
 
         {/* Caja de bienvenida */}
         <div className="bg-white/90 rounded-2xl shadow-lg p-8 w-full max-w-md mb-8 text-center">
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">
-            ¡Bienvenido/a!
-          </h3>
-          <p className="text-lg text-gray-700">
-            {nombre} {apellido}
-          </p>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">¡Bienvenido/a!</h3>
+          <p className="text-lg text-gray-700">{nombre} {apellido}</p>
         </div>
 
-        {/* CONTENEDOR DE LOS 3 BOTONES ✔ igual al Supervisor */}
+        {/* CONTENEDOR DE BOTONES */}
         <div className="bg-white/90 rounded-2xl shadow-md p-6 w-full max-w-md space-y-4">
 
-          {/* PRIMER BOTÓN: Registro paciente */}
+          {/* Registro paciente */}
           <button
             onClick={() => navigate("/practicante/scan")}
             className="w-full py-4 bg-[#1E6176] text-white text-lg font-semibold
@@ -72,7 +78,7 @@ export default function MenuPracticante() {
             Registro paciente
           </button>
 
-          {/* SEGUNDO BOTÓN: IGUAL AL "Ver Agenda…" del supervisor */}
+          {/* Ingresar paciente */}
           <button
             onClick={() => navigate("/detalles-atencion")}
             className="w-full py-4 bg-white text-[#1E6176] border-2 border-[#1E6176]
@@ -82,7 +88,7 @@ export default function MenuPracticante() {
             Ingresar paciente
           </button>
 
-          {/* TERCER BOTÓN: IGUAL AL "Registrar" del supervisor */}
+          {/* Historial */}
           <button
             onClick={() => navigate("/historial")}
             className="w-full py-4 bg-white text-[#1E6176] border-2 border-[#1E6176]
@@ -92,18 +98,52 @@ export default function MenuPracticante() {
             Ver historial
           </button>
 
-          {/* CUARTO BOTÓN: IGUAL AL "Cerrar Sesión" del supervisor */}
+          {/* Cerrar sesión */}
           <button
-            onClick={() => navigate("/login")}
+            onClick={handleCerrarSesion}
             className="w-full py-4 bg-gray-600 text-white text-lg font-semibold
                        rounded-xl shadow-md hover:bg-gray-700 active:scale-95 transition"
           >
             Cerrar Sesión
           </button>
-
         </div>
-
       </div>
+
+      {/* POPUP CONFIRMACIÓN - CERRAR SESIÓN */}
+      {mostrarPopupLogout && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl animate-fadeUp">
+            
+            <div className="text-center mb-4">
+              <div className="text-6xl mb-3">⚠️</div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                ¿Estás seguro que deseas cerrar sesión?
+              </h3>
+              <p className="text-gray-600 text-sm">
+                Serás redirigido al inicio de sesión.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <button
+                onClick={confirmarCerrarSesion}
+                className="w-full py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 active:scale-95 transition"
+              >
+                Sí, Cerrar Sesión
+              </button>
+
+              <button
+                onClick={() => setMostrarPopupLogout(false)}
+                className="w-full py-3 bg-gray-300 text-gray-800 font-semibold rounded-xl hover:bg-gray-400 active:scale-95 transition"
+              >
+                Cancelar
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+      
     </div>
   );
 }
