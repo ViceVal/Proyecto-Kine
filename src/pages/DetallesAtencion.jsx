@@ -1,5 +1,5 @@
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import textura from "../assets/TexturaHQ.png";
 
 import DatePicker from "react-date-picker";
@@ -15,6 +15,25 @@ export default function DetallesAtencion() {
 
   const [fecha, setFecha] = useState(null);
   const [hora, setHora] = useState("20:00");
+  const [moduloNumero, setModuloNumero] = useState("");
+
+  const location = useLocation();
+
+  useEffect(() => {
+    // Defensive: ensure location and URLSearchParams are available
+    if (!location) return;
+    try {
+      const search = location.search ?? (typeof window !== "undefined" ? window.location.search : "");
+      const params = new URLSearchParams(search);
+      // Prefer human-readable boxName (provided by QR generator). Fall back to boxId if needed.
+      const boxName = params.get("boxName");
+      const boxId = params.get("boxId");
+      if (boxName) setModuloNumero(boxName);
+      else if (boxId) setModuloNumero(boxId);
+    } catch (e) {
+      // ignore parsing errors
+    }
+  }, [location, setModuloNumero]);
 
   return (
     <div
@@ -88,6 +107,8 @@ export default function DetallesAtencion() {
         </h3>
         <input
           type="text"
+          value={moduloNumero}
+          onChange={(e) => setModuloNumero(e.target.value)}
           className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 shadow-sm mb-6"
         />
 
