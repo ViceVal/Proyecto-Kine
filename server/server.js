@@ -16,12 +16,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ MOCK DATA - Datos hardcodeados en memoria
-const MOCK_BOXES = [
-  { idbox: '1', nombre: 'Box 1', descripcion: 'Box de atención 1' },
-  { idbox: '2', nombre: 'Box 2', descripcion: 'Box de atención 2' },
-  { idbox: '3', nombre: 'Box 3', descripcion: 'Box de atención 3' },
-];
+// PostgreSQL connection pool
+const pool = new Pool({
+  host: process.env.PGHOST || 'kine-app-db.ccnqye4wgpbx.us-east-1.rds.amazonaws.com',
+  port: parseInt(process.env.PGPORT || '5432', 10),
+  user: process.env.PGUSER || 'admin_kine',
+  password: process.env.PGPASSWORD || 'kineappdb',
+  database: process.env.PGDATABASE || 'kine_app',
+  ssl: process.env.PGSSL === 'true' ? { rejectUnauthorized: false } : false,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
 
 const MOCK_QRCODES = [
   {
@@ -201,25 +207,99 @@ app.post('/api/attendance', (req, res) => {
   res.status(201).json(newAttendance);
 });
 
-// ✅ GET /api/attendance - Obtener historial de asistencias
-app.get('/api/attendance', (req, res) => {
-  const { practicanteId, boxId, desde, hasta } = req.query;
+// POST /api/validate-location - valida que el practicante esté dentro del edificio
+app.post('/api/validate-location', async (req, res) => {
+  const { latitude, longitude, id_box } = req.body;
 
-  let filtered = [...MOCK_ATTENDANCES];
+  if (!latitude || !longitude || !id_box) {
+    return res.status(400).json({ error: 'latitude, longitude, id_box are required' });
+  }
 
-  if (practicanteId) filtered = filtered.filter(a => a.practicanteId === practicanteId);
-  if (boxId) filtered = filtered.filter(a => a.idbox === boxId);
-  if (desde) filtered = filtered.filter(a => new Date(a.fecha) >= new Date(desde));
-  if (hasta) filtered = filtered.filter(a => new Date(a.fecha) <= new Date(hasta));
+  try {
+    // Obtener coordenadas del box desde BD
+    const boxResult = await pool.query(
+      'SELECT id_box, nombre, latitud, longitud, radio_metros FROM box WHERE id_box = $1',
+      [id_box]
+    );
 
-  filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    if (boxResult.rows.length === 0) {
+      return res.status(404).json({ error: 'box not found' });
+    }
 
-  console.log(`GET /api/attendance - returning ${filtered.length} records`);
-  res.json(filtered);
+    const box = boxResult.rows[0];
+
+    // Validar que el box tenga coordenadas
+    if (!box.latitud || !box.longitud) {
+      return res.status(400).json({ 
+        error: 'box_not_configured', 
+        message: 'El box no tiene coordenadas configuradas' 
+      });
+    }
+
+    // Calcular distancia usando Haversine en SQL
+    const distResult = await pool.query(
+      `SELECT 
+        6371 * acos(
+          cos(radians($1)) * cos(radians(latitud)) * 
+          cos(radians(longitud) - radians($2)) + 
+          sin(radians($1)) * sin(radians(latitud))
+        ) * 1000 as distance_meters
+       FROM box WHERE id_box = $3`,
+      [latitude, longitude, id_box]
+    );
+
+    const distance = distResult.rows[0].distance_meters;
+    const allowedRadius = box.radio_metros || 50; // 50 metros por defecto
+
+    const isInside = distance <= allowedRadius;
+
+    res.json({
+      valid: isInside,
+      box_name: box.nombre,
+      distance_meters: Math.round(distance),
+      allowed_radius: allowedRadius,
+      message: isInside 
+        ? `✓ Dentro del área autorizada (${Math.round(distance)}m)` 
+        : `✗ Fuera del área. Distancia: ${Math.round(distance)}m, radio permitido: ${allowedRadius}m`
+    });
+
+  } catch (error) {
+    console.error('POST /api/validate-location error:', error);
+    res.status(500).json({ error: 'validation failed', details: error.message });
+  }
 });
 
-// ✅ Error handling
-app.use((err, req, res, _next) => {
+// POST /api/atencion - registrar una atención con ubicación (usa PostGIS)
+app.post('/api/atencion', async (req, res) => {
+  const { id_usuario, id_box, id_qr, id_paciente, latitude, longitude, duracion_min, observaciones } = req.body || {};
+
+  if (!id_box || !latitude || !longitude) {
+    return res.status(400).json({ error: 'id_box, latitude and longitude are required' });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO atencion 
+        (id_usuario, id_box, id_qr, id_paciente, ubicacion, duracion_min, observaciones)
+       VALUES 
+        ($1, $2, $3, $4, ST_SetSRID(ST_MakePoint($5, $6), 4326), $7, $8)
+       RETURNING id_atencion, fecha_hora_registro`,
+      [id_usuario, id_box, id_qr, id_paciente, longitude, latitude, duracion_min, observaciones]
+    );
+
+    res.status(201).json({
+      success: true,
+      id_atencion: result.rows[0].id_atencion,
+      timestamp: result.rows[0].fecha_hora_registro
+    });
+  } catch (error) {
+    console.error('POST /api/atencion error:', error);
+    res.status(500).json({ error: 'Error al registrar atención', details: error.message });
+  }
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   res.status(500).json({
     error: 'internal server error',
