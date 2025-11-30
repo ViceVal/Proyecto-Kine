@@ -207,6 +207,23 @@ app.post('/api/attendance', (req, res) => {
   res.status(201).json(newAttendance);
 });
 
+// ✅ GET /api/attendance - Obtener historial de asistencias
+app.get('/api/attendance', (req, res) => {
+  const { practicanteId, boxId, desde, hasta } = req.query;
+
+  let filtered = [...MOCK_ATTENDANCES];
+
+  if (practicanteId) filtered = filtered.filter(a => a.practicanteId === practicanteId);
+  if (boxId) filtered = filtered.filter(a => a.idbox === boxId);
+  if (desde) filtered = filtered.filter(a => new Date(a.fecha) >= new Date(desde));
+  if (hasta) filtered = filtered.filter(a => new Date(a.fecha) <= new Date(hasta));
+
+  filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  console.log(`GET /api/attendance - returning ${filtered.length} records`);
+  res.json(filtered);
+});
+
 // POST /api/validate-location - valida que el practicante esté dentro del edificio
 app.post('/api/validate-location', async (req, res) => {
   const { latitude, longitude, id_box } = req.body;
@@ -230,9 +247,9 @@ app.post('/api/validate-location', async (req, res) => {
 
     // Validar que el box tenga coordenadas
     if (!box.latitud || !box.longitud) {
-      return res.status(400).json({ 
-        error: 'box_not_configured', 
-        message: 'El box no tiene coordenadas configuradas' 
+      return res.status(400).json({
+        error: 'box_not_configured',
+        message: 'El box no tiene coordenadas configuradas'
       });
     }
 
@@ -258,8 +275,8 @@ app.post('/api/validate-location', async (req, res) => {
       box_name: box.nombre,
       distance_meters: Math.round(distance),
       allowed_radius: allowedRadius,
-      message: isInside 
-        ? `✓ Dentro del área autorizada (${Math.round(distance)}m)` 
+      message: isInside
+        ? `✓ Dentro del área autorizada (${Math.round(distance)}m)`
         : `✗ Fuera del área. Distancia: ${Math.round(distance)}m, radio permitido: ${allowedRadius}m`
     });
 
