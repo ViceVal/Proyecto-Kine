@@ -25,15 +25,30 @@ export default function DetallesAtencion() {
     try {
       const search = location.search ?? (typeof window !== "undefined" ? window.location.search : "");
       const params = new URLSearchParams(search);
-      // Prefer human-readable boxName (provided by QR generator). Fall back to boxId if needed.
+      
+      // Leer boxName o boxId
       const boxName = params.get("boxName");
       const boxId = params.get("boxId");
       if (boxName) setModuloNumero(boxName);
       else if (boxId) setModuloNumero(boxId);
+      
+      // Leer fecha del QR (formato: "2025-12-01")
+      const fechaParam = params.get("fecha");
+      if (fechaParam) {
+        // Convertir string "2025-12-01" a Date object para DatePicker
+        const [year, month, day] = fechaParam.split('-').map(Number);
+        setFecha(new Date(year, month - 1, day)); // month es 0-indexed
+      }
+      
+      // Leer hora del QR (formato: "14:30")
+      const horaParam = params.get("hora");
+      if (horaParam) {
+        setHora(horaParam); // TimePicker acepta string "HH:mm"
+      }
     } catch (e) {
-      // ignore parsing errors
+      console.error('Error parsing URL params:', e);
     }
-  }, [location, setModuloNumero]);
+  }, [location]);
 
   return (
     <div

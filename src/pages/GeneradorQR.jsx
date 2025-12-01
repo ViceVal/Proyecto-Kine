@@ -47,9 +47,18 @@ export default function GeneradorQR() {
     return () => { mounted = false };
   }, [apiBase]);
 
-  // Use boxName in the URL so the attendance page can autofill by name
+  // Use boxName, fecha, hora in the URL so the attendance page can autofill
   // If a codigo_qr was created on the server, include it in the URL so the scanner can send it back.
-  const attendanceUrlBase = `${baseUrl}${targetPath}?boxName=${encodeURIComponent(selectedBoxName)}`;
+  let attendanceUrlBase = `${baseUrl}${targetPath}?boxName=${encodeURIComponent(selectedBoxName)}`;
+  
+  // Agregar fecha y hora si están disponibles
+  if (scheduledDate) {
+    attendanceUrlBase += `&fecha=${encodeURIComponent(scheduledDate)}`;
+  }
+  if (scheduledTime) {
+    attendanceUrlBase += `&hora=${encodeURIComponent(scheduledTime)}`;
+  }
+  
   const attendanceUrl = createdCodigo ? `${attendanceUrlBase}&codigo_qr=${encodeURIComponent(createdCodigo)}` : attendanceUrlBase;
 
   const qrApi = (data) => `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(data)}`;
