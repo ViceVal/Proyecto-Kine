@@ -1,6 +1,7 @@
-import { useState, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Html5Qrcode } from 'html5-qrcode';
+import { useState, useRef, useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Html5Qrcode } from "html5-qrcode";
+import textura from "../assets/TexturaHQ.png";
 
 const ScanQRScreen = () => {
   const [scanning, setScanning] = useState(false);
@@ -11,61 +12,100 @@ const ScanQRScreen = () => {
   const html5QrCodeRef = useRef(null);
   const isInitializedRef = useRef(false);
 
-  const onScanSuccess = useCallback(async (decodedText) => {
-    console.log('QR Code escaneado:', decodedText);
-    setResult(decodedText);
+  const apiBase = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
-    // Detener el escaneo
-    if (html5QrCodeRef.current) {
+  const onScanSuccess = useCallback(
+    async (decodedText) => {
+      console.log("✅ QR Code escaneado:", decodedText);
+      setResult(decodedText);
+
+      // Detener el escaneo inmediatamente
+      if (html5QrCodeRef.current) {
+        try {
+          await html5QrCodeRef.current.stop();
+          html5QrCodeRef.current = null;
+          isInitializedRef.current = false;
+          setScanning(false);
+        } catch (err) {
+          console.error("Error al detener la cámara:", err);
+        }
+      }
+
       try {
-        await html5QrCodeRef.current.stop();
-        html5QrCodeRef.current = null;
-        isInitializedRef.current = false;
+        // 1. Intentar parsear como URL completa
+        try {
+          const url = new URL(decodedText);
+          const path = url.pathname + url.search;
+          console.log("🔗 URL detectada, navegando a:", path);
+          navigate(path);
+          return;
+        } catch {
+          // No es URL, continuar
+        }
+
+        // 2. Intentar parsear como JSON
+        try {
+          const qrData = JSON.parse(decodedText);
+          const boxName = qrData.boxName || "Box Sin Especificar";
+          const codigoqr = qrData.codigoqr || qrData.code || decodedText;
+          const fecha = qrData.fecha || "";
+          const hora = qrData.hora || "";
+
+          console.log("📋 JSON detectado:", { boxName, codigoqr, fecha, hora });
+          navigate(
+            `/detalles-atencion?boxName=${encodeURIComponent(boxName)}&codigoqr=${encodeURIComponent(codigoqr)}&fecha=${fecha}&hora=${hora}`
+          );
+          return;
+        } catch {
+          // No es JSON válido
+        }
+
+        // 3. QR simple: consultar al servidor
+        console.log("🔍 Código QR simple detectado, consultando servidor...");
+
+        const response = await fetch(
+          `${apiBase}/api/qrcodes/${encodeURIComponent(decodedText)}`
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "QR no válido");
+        }
+
+        const qrData = await response.json();
+        console.log("✅ Datos del QR obtenidos:", qrData);
+
+        // Extraer datos necesarios
+        const boxName = qrData.nombre || "Box Sin Especificar";
+        const codigoqr = qrData.codigoqr;
+
+        // Extraer fecha y hora del scheduledAt (formato: "2025-12-01T14:30:00")
+        let fecha = "";
+        let hora = "";
+        if (qrData.scheduledat) {
+          const dt = new Date(qrData.scheduledat);
+          fecha = dt.toISOString().split("T")[0]; // "2025-12-01"
+          hora = dt.toTimeString().slice(0, 5); // "14:30"
+        }
+
+        console.log("📦 Parámetros a enviar:", {
+          boxName,
+          codigoqr,
+          fecha,
+          hora,
+        });
+
+        // Navegar con todos los parámetros
+        navigate(
+          `/detalles-atencion?boxName=${encodeURIComponent(boxName)}&codigoqr=${encodeURIComponent(codigoqr)}&fecha=${fecha}&hora=${hora}`
+        );
       } catch (err) {
-        console.error('Error al detener la cámara:', err);
+        console.error("❌ Error al procesar el QR:", err);
+        setError(`Error: ${err.message}`);
       }
-    }
-    setScanning(false);
-
-    // Procesar el QR escaneado
-    try {
-      // Intentar parsear como URL
-      try {
-        const url = new URL(decodedText);
-        
-        // Es una URL completa - extraer path y query params
-        const path = url.pathname + url.search;
-        console.log('✅ URL detectada, navegando a:', path);
-        navigate(path);
-        return;
-        
-      } catch {
-        // No es URL válida, continuar con procesamiento alternativo
-      }
-
-      // Intentar parsear como JSON
-      try {
-        const qrData = JSON.parse(decodedText);
-        const boxName = qrData.boxName || 'Box Sin Especificar';
-        const codigoqr = qrData.codigoqr || qrData.code || decodedText;
-        
-        console.log('✅ JSON detectado, datos:', { boxName, codigoqr });
-        navigate(`/detalles-atencion?boxName=${encodeURIComponent(boxName)}&codigoqr=${encodeURIComponent(codigoqr)}`);
-        return;
-        
-      } catch {
-        // No es JSON válido
-      }
-
-      // Asumir que es solo un código QR simple
-      console.log('✅ Código QR simple detectado:', decodedText);
-      navigate(`/detalles-atencion?codigoqr=${encodeURIComponent(decodedText)}`);
-      
-    } catch (err) {
-      console.error('❌ Error al procesar el QR:', err);
-      setError(`Error al procesar el QR: ${err.message}`);
-    }
-  }, [navigate]);
+    },
+    [navigate, apiBase]
+  );
 
   const onScanError = useCallback(() => {
     // Este error se dispara continuamente mientras escanea, no es necesario mostrarlo
@@ -77,188 +117,238 @@ const ScanQRScreen = () => {
         await html5QrCodeRef.current.stop();
         html5QrCodeRef.current = null;
         isInitializedRef.current = false;
+        setScanning(false);
       } catch (err) {
-        console.error('Error al detener la cámara:', err);
-      }
-    }
-  }, []);
-
-  // Función mejorada para verificar permisos de cámara
-  const checkCameraPermission = useCallback(async () => {
-    try {
-      // Intentar obtener permisos explícitamente
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
-      });
-      
-      // Si llega aquí, hay permisos
-      stream.getTracks().forEach(track => track.stop()); // Detener inmediatamente
-      return true;
-    } catch (err) {
-      console.error('Error al verificar permisos:', err);
-      
-      // Detectar tipo de error
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        setPermissionDenied(true);
-        setError('Permisos de cámara denegados. Por favor, habilita el acceso a la cámara en la configuración del navegador.');
-        return false;
-      } else if (err.name === 'NotFoundError') {
-        setError('No se encontró ninguna cámara en el dispositivo.');
-        return false;
-      } else {
-        setError('Error al acceder a la cámara: ' + err.message);
-        return false;
+        console.error("Error al detener la cámara:", err);
       }
     }
   }, []);
 
   const startScanning = useCallback(async () => {
-    // Evitar inicializar múltiples veces (previene triplicación)
+    // Evitar inicializar múltiples veces
     if (isInitializedRef.current || html5QrCodeRef.current) {
-      console.log('Scanner ya inicializado, ignorando...');
+      console.log("📸 Scanner ya inicializado, ignorando...");
       return;
     }
 
     try {
       setScanning(true);
       setError(null);
-      setPermissionDenied(false); // Resetear estado de permisos
+      setPermissionDenied(false);
+      setResult(null);
+
+      console.log("⏳ Esperando a que el DOM se actualice...");
+      
+      // Esperar a que React renderice el elemento
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const qrReaderElement = document.getElementById("qr-reader");
+      if (!qrReaderElement) {
+        throw new Error(
+          "Elemento #qr-reader no encontrado. Verifica que el componente esté renderizado."
+        );
+      }
+
+      console.log("✅ Elemento #qr-reader encontrado, inicializando...");
+
       isInitializedRef.current = true;
 
       // Crear instancia de Html5Qrcode
-      html5QrCodeRef.current = new Html5Qrcode('qr-reader');
+      html5QrCodeRef.current = new Html5Qrcode("qr-reader");
 
       // Configuración de la cámara
       const config = {
-        fps: 10,
+        fps: 60,
         qrbox: { width: 250, height: 250 },
       };
 
       await html5QrCodeRef.current.start(
-        { facingMode: 'environment' },
+        { facingMode: "environment" },
         config,
         onScanSuccess,
         onScanError
       );
+
+      console.log("✅ Cámara iniciada correctamente");
     } catch (err) {
-      console.error('Error al iniciar la cámara:', err);
-      
-      // Detectar si es error de permisos
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      console.error("❌ Error al iniciar la cámara:", err);
+
+      if (
+        err.name === "NotAllowedError" ||
+        err.name === "PermissionDeniedError"
+      ) {
         setPermissionDenied(true);
-        setError('Permisos de cámara denegados. Haz clic en "Solicitar Permisos" para intentar nuevamente.');
+        setError(
+          "Permisos de cámara denegados. Haz clic en Solicitar Permisos para intentar nuevamente."
+        );
       } else {
-        setError('No se pudo acceder a la cámara. Por favor, verifica los permisos.');
+        setError(
+          `No se pudo acceder a la cámara: ${err.message}`
+        );
       }
-      
+
       setScanning(false);
       isInitializedRef.current = false;
     }
   }, [onScanSuccess, onScanError]);
 
-  // Función para solicitar permisos explícitamente
+  const checkCameraPermission = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+      });
+
+      // Si llega aquí, hay permisos
+      stream.getTracks().forEach((track) => track.stop());
+      return true;
+    } catch (err) {
+      console.error("Error al verificar permisos:", err);
+
+      if (
+        err.name === "NotAllowedError" ||
+        err.name === "PermissionDeniedError"
+      ) {
+        setPermissionDenied(true);
+        setError(
+          "Permisos de cámara denegados. Por favor, habilita el acceso a la cámara en la configuración del navegador."
+        );
+        return false;
+      } else if (err.name === "NotFoundError") {
+        setError("No se encontró ninguna cámara en el dispositivo.");
+        return false;
+      } else {
+        setError(`Error al acceder a la cámara: ${err.message}`);
+        return false;
+      }
+    }
+  }, []);
+
   const requestCameraPermission = useCallback(async () => {
     const hasPermission = await checkCameraPermission();
-    
     if (hasPermission) {
-      // Si obtuvo permisos, iniciar escaneo
       setPermissionDenied(false);
-      startScanning();
+      await startScanning();
     }
   }, [checkCameraPermission, startScanning]);
 
-  // Ref callback para el div qr-reader (garantiza DOM listo + pide permisos)
-  const qrReaderRef = useCallback((node) => {
-    if (node && !isInitializedRef.current) {
-      // Pequeño delay para asegurar que el DOM esté completamente renderizado
-      setTimeout(() => {
-        startScanning();
-      }, 100);
-    } else if (!node) {
-      // Limpiar al desmontar
-      stopScanning();
-    }
-  }, [startScanning, stopScanning]);
-
-  const handleBack = () => {
-    navigate(-1);
-  };
-
-  const handleRescan = () => {
-    setResult(null);
-    setError(null);
-    setPermissionDenied(false);
-    startScanning();
-  };
+  // Cleanup al desmontar el componente
+  useEffect(() => {
+    return async () => {
+      if (html5QrCodeRef.current) {
+        try {
+          await html5QrCodeRef.current.stop();
+          html5QrCodeRef.current = null;
+          isInitializedRef.current = false;
+        } catch (err) {
+          console.error("Error al limpiar scanner:", err);
+        }
+      }
+    };
+  }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-      {/* Header */}
-      <div className="relative w-full max-w-md mb-6">
+    <div
+      className="min-h-screen w-full flex flex-col"
+      style={{
+        backgroundImage: `url(${textura})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      {/* HEADER */}
+      <div className="relative w-full bg-D2C9FF py-6 text-center shadow">
         <button
-          onClick={handleBack}
-          className="absolute left-0 text-2xl font-bold mb-4 text-black"
+          onClick={() => navigate(-1)}
+          className="absolute left-4 top-12 -translate-y-12 text-black text-2xl hover:scale-110 transition"
         >
           ←
         </button>
-        <h1 className="text-3xl font-bold mb-6 text-gray-800 text-center">
-          Escanear Código QR
-        </h1>
+        <h1 className="text-3xl font-bold text-gray-900">KineApp</h1>
+        <h2 className="text-gray-700 text-sm font-semibold">
+          Escanear QR del Paciente
+        </h2>
       </div>
 
-      {/* Contenedor de la cámara */}
-      <div className="w-full max-w-md bg-white rounded-lg shadow-md p-6">
+      {/* CONTENIDO */}
+      <div className="flex-1 px-6 pt-6 pb-8 overflow-y-auto flex flex-col items-center justify-start">
+        {/* Scanner container - SIEMPRE renderizado pero oculto si no escanea */}
+        <div
+          id="qr-reader"
+          className={`w-full max-w-md mb-6 rounded-xl overflow-hidden transition-all ${
+            scanning ? "opacity-100 min-h-80" : "opacity-0 hidden min-h-0"
+          }`}
+          style={{
+            minHeight: scanning ? "400px" : "0px",
+            border: scanning ? "2px solid #1E6176" : "none",
+          }}
+        />
+
+        {/* Botones de control */}
+        <div className="w-full max-w-md space-y-4">
+          {!scanning ? (
+            <button
+              onClick={startScanning}
+              className="w-full py-4 bg-1E6176 text-white text-lg font-semibold rounded-xl shadow-md hover:bg-164d5e active:scale-95 transition"
+            >
+              Iniciar Escaneo
+            </button>
+          ) : (
+            <button
+              onClick={stopScanning}
+              className="w-full py-4 bg-red-500 text-white text-lg font-semibold rounded-xl shadow-md hover:bg-red-600 active:scale-95 transition"
+            >
+              Detener Escaneo
+            </button>
+          )}
+
+          {permissionDenied && (
+            <button
+              onClick={requestCameraPermission}
+              className="w-full py-4 bg-blue-600 text-white text-lg font-semibold rounded-xl shadow-md hover:bg-blue-700 active:scale-95 transition"
+            >
+              Solicitar Permisos
+            </button>
+          )}
+        </div>
+
+        {/* Errores */}
         {error && (
-          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-            {error}
+          <div className="w-full max-w-md mt-6 p-4 bg-red-50 border-2 border-red-300 rounded-xl animate-fadeUp">
+            <p className="text-red-700 font-semibold">❌ Error:</p>
+            <p className="text-red-600 text-sm">{error}</p>
           </div>
         )}
 
-        {scanning && (
-          <div className="text-center mb-4">
-            <p className="text-lg text-gray-700 mb-2">
-              Apunta la cámara al código QR del paciente
+        {/* Resultado exitoso */}
+        {result && !error && (
+          <div className="w-full max-w-md mt-6 p-4 bg-green-50 border-2 border-green-300 rounded-xl animate-fadeUp">
+            <p className="text-green-700 font-semibold">✅ QR Detectado:</p>
+            <p className="text-green-600 text-sm break-all font-mono">{result}</p>
+            <p className="text-green-600 text-xs mt-2">
+              Redirigiendo en 2 segundos...
             </p>
           </div>
         )}
 
-        {/* Visor de la cámara */}
-        <div
-          ref={qrReaderRef}
-          id="qr-reader"
-          className="w-full rounded-lg overflow-hidden"
-          style={{ minHeight: '300px' }}
-        ></div>
-
-        {result && (
-          <div className="mt-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
-            <p className="font-bold">QR Escaneado:</p>
-            <p className="text-sm break-all">{result}</p>
+        {/* Info */}
+        {!scanning && !result && (
+          <div className="w-full max-w-md mt-8 text-center animate-fadeUp">
+            <p className="text-gray-600 text-sm">
+              📱 Apunta la cámara al código QR del paciente
+            </p>
+            <p className="text-gray-500 text-xs mt-2">
+              Asegúrate de tener buena iluminación
+            </p>
           </div>
         )}
 
-        {/* Botones mejorados con detección de permisos */}
-        {!scanning && !result && (
-          <div className="space-y-2 mt-4">
-            {/* Botón principal: Volver a escanear */}
-            {!permissionDenied && (
-              <button
-                onClick={handleRescan}
-                className="w-full py-3 bg-blue-500 hover:bg-blue-700 text-white font-bold rounded focus:outline-none focus:shadow-outline transition"
-              >
-                🔄 Volver a escanear
-              </button>
-            )}
-
-            {/* Botón específico para solicitar permisos (solo si fueron denegados) */}
-            {permissionDenied && (
-              <button
-                onClick={requestCameraPermission}
-                className="w-full py-3 bg-orange-500 hover:bg-orange-700 text-white font-bold rounded focus:outline-none focus:shadow-outline transition"
-              >
-                🔐 Solicitar Permisos de Cámara
-              </button>
-            )}
+        {scanning && (
+          <div className="w-full max-w-md mt-8 text-center">
+            <div className="animate-pulse">
+              <p className="text-gray-700 text-sm font-semibold">
+                🔍 Escaneando...
+              </p>
+            </div>
           </div>
         )}
       </div>
