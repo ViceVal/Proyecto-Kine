@@ -69,7 +69,7 @@ export default function Retroalimentacion() {
     });
 
     setMostrarPopupAprobar(false);
-    alert(" Consulta aprobada correctamente");
+    alert("✅ Consulta aprobada correctamente");
     navigate("/consultas-practicante", { state: { practicante } });
   };
 
@@ -185,7 +185,7 @@ export default function Retroalimentacion() {
             onClick={handleAprobar}
             className="w-full py-4 bg-green-600 text-white text-lg font-semibold rounded-xl shadow-md hover:bg-green-700 active:scale-95 transition"
           >
-             Aprobar Consulta
+            ✅ Aprobar Consulta
           </button>
 
           {/* Botón Rechazar */}
@@ -211,7 +211,7 @@ export default function Retroalimentacion() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl animate-fadeUp">
             <div className="text-center mb-4">
-              <div className="text-6xl mb-3"></div>
+              <div className="text-6xl mb-3">✅</div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">
                 ¿Aprobar esta consulta?
               </h3>

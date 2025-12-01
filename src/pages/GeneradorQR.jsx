@@ -4,9 +4,12 @@ import textura from "../assets/TexturaHQ.png";
 
 export default function GeneradorQR() {
   const navigate = useNavigate();
-  
+  // Fetch boxes from backend (no local fallback)
   const [boxesList, setBoxesList] = useState([]);
+  const [boxesLoading, setBoxesLoading] = useState(true);
+  const [boxesError, setBoxesError] = useState(null);
   const [selectedBoxName, setSelectedBoxName] = useState("");
+  const [targetPath, setTargetPath] = useState("/detalles-atencion");
   const [scheduledDate, setScheduledDate] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
   const [creating, setCreating] = useState(false);
@@ -14,45 +17,42 @@ export default function GeneradorQR() {
 
   const frontendOrigin = typeof window !== "undefined" ? window.location.origin : "";
   const baseUrl = import.meta.env.VITE_FRONTEND_URL || frontendOrigin;
-  const targetPath = "/detalles-atencion";
 
-  const selectedBox = useMemo(
-    () => boxesList.find((b) => b.nombre === selectedBoxName), 
-    [selectedBoxName, boxesList]
-  );
+  const selectedBox = useMemo(() => boxesList.find((b) => b.nombre === selectedBoxName), [selectedBoxName, boxesList]);
 
-  const apiBase = import.meta.env.VITE_API_URL || 'https://localhost:4000';
+  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
+  // Fetch boxes from backend on mount
   useEffect(() => {
     let mounted = true;
-    
+    setBoxesLoading(true);
+    setBoxesError(null);
     (async () => {
       try {
         const res = await fetch(`${apiBase}/api/boxes`);
         if (!res.ok) throw new Error(`Failed to load boxes: ${res.status}`);
-        
         const data = await res.json();
         if (!mounted) return;
-        
         setBoxesList(data);
-        if (!selectedBoxName && data.length) {
-          setSelectedBoxName(data[0].nombre);
-        }
+        if (!selectedBoxName && data.length) setSelectedBoxName(data[0].nombre);
       } catch (err) {
         console.error('Failed to load boxes', err);
+        if (!mounted) return;
+        setBoxesError(err.message || 'failed');
+      } finally {
+        if (!mounted) return;
+        setBoxesLoading(false);
       }
     })();
-    
-    return () => { mounted = false; };
-  }, [apiBase, selectedBoxName]);
+    return () => { mounted = false };
+  }, [apiBase]);
 
+  // Use boxName in the URL so the attendance page can autofill by name
+  // If a codigo_qr was created on the server, include it in the URL so the scanner can send it back.
   const attendanceUrlBase = `${baseUrl}${targetPath}?boxName=${encodeURIComponent(selectedBoxName)}`;
-  const attendanceUrl = createdCodigo 
-    ? `${attendanceUrlBase}&codigoqr=${encodeURIComponent(createdCodigo)}` 
-    : attendanceUrlBase;
+  const attendanceUrl = createdCodigo ? `${attendanceUrlBase}&codigo_qr=${encodeURIComponent(createdCodigo)}` : attendanceUrlBase;
 
-  const qrApi = (data) => 
-    `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(data)}`;
+  const qrApi = (data) => `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(data)}`;
 
   async function downloadQr() {
     const url = qrApi(attendanceUrl);
@@ -61,7 +61,7 @@ export default function GeneradorQR() {
       const blob = await res.blob();
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      const safeName = (selectedBox?.nombre || "qr").replace(/[^a-z0-9-_.]/gi, "_");
+      const safeName = (selectedBox?.nombre || "qr").replace(/[^a-z0-9-_\.]/gi, "_");
       a.download = `${safeName}.png`;
       document.body.appendChild(a);
       a.click();
@@ -121,65 +121,41 @@ export default function GeneradorQR() {
 
             <div className="grid grid-cols-2 gap-4">
               <label className="block">
-                <div className="text-sm font-semibold mb-1">
-                  Fecha <span className="text-red-600">*</span>
-                </div>
-                <input
-                  type="date"
-                  value={scheduledDate}
-                  onChange={(e) => setScheduledDate(e.target.value)}
-                  required
-                  className="w-full border rounded px-3 py-2"
-                />
+                <div className="text-sm font-semibold mb-1">Fecha <span className="text-red-600">*</span></div>
+                <input type="date" value={scheduledDate} onChange={(e)=>setScheduledDate(e.target.value)} required className="w-full border rounded px-3 py-2" />
               </label>
               <label className="block">
-                <div className="text-sm font-semibold mb-1">
-                  Hora <span className="text-red-600">*</span>
-                </div>
-                <input
-                  type="time"
-                  value={scheduledTime}
-                  onChange={(e) => setScheduledTime(e.target.value)}
-                  required
-                  className="w-full border rounded px-3 py-2"
-                />
+                <div className="text-sm font-semibold mb-1">Hora <span className="text-red-600">*</span></div>
+                <input type="time" value={scheduledTime} onChange={(e)=>setScheduledTime(e.target.value)} required className="w-full border rounded px-3 py-2" />
               </label>
             </div>
 
+            {/* Main action button - creates QR in DB and downloads it */}
             <button
               onClick={async () => {
                 if (!scheduledDate || !scheduledTime) {
                   alert('❌ Fecha y hora son obligatorias');
                   return;
                 }
-                
                 const scheduledAt = new Date(`${scheduledDate}T${scheduledTime}`).toISOString();
                 setCreating(true);
-                
                 try {
-                  const res = await fetch(`${apiBase}/api/qrcodes`, {
+                  const res = await fetch(`${apiBase}/api/qr_codes`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ boxName: selectedBoxName, scheduledAt }),
                   });
-                  
                   const body = await res.json();
-                  
                   if (res.status === 201) {
-                    setCreatedCodigo(body.codigoqr);
+                    setCreatedCodigo(body.codigo_qr);
+                    // Automáticamente descargar el QR
                     setTimeout(() => {
                       downloadQr();
-                      alert(
-                        '✓ QR creado exitosamente: ' + body.codigoqr + 
-                        '\nFecha: ' + scheduledDate + ' ' + scheduledTime
-                      );
+                      alert('✓ QR creado exitosamente: ' + body.codigo_qr + '\nFecha: ' + scheduledDate + ' ' + scheduledTime);
                     }, 300);
                   } else if (res.status === 409) {
-                    setCreatedCodigo(body.existing?.codigoqr || '');
-                    alert(
-                      '⚠️ ' + body.message + 
-                      '\nCódigo existente: ' + (body.existing?.codigoqr || 'N/A')
-                    );
+                    setCreatedCodigo(body.existing?.codigo_qr || '');
+                    alert('⚠️ ' + body.message + '\nCódigo existente: ' + (body.existing?.codigo_qr || 'N/A'));
                   } else {
                     console.error('Failed to create QR', body);
                     alert('❌ Error: ' + (body.error || 'Desconocido'));
@@ -197,6 +173,7 @@ export default function GeneradorQR() {
               {creating ? '⏳ Creando QR...' : '✨ Crear QR y Descargar'}
             </button>
 
+            {/* Copy link button - only shows after QR is created */}
             {createdCodigo && (
               <button
                 onClick={copyUrl}
@@ -206,22 +183,12 @@ export default function GeneradorQR() {
               </button>
             )}
 
+            {/* QR Preview - only shows after creation */}
             {createdCodigo && (
               <div className="mt-6 text-center border-t pt-6">
-                <p className="text-sm text-gray-600 mb-4">
-                  Código QR generado:{" "}
-                  <span className="font-mono font-bold text-indigo-600">
-                    {createdCodigo}
-                  </span>
-                </p>
-                <img
-                  src={qrApi(attendanceUrl)}
-                  alt="QR preview"
-                  className="inline-block border-2 border-indigo-200 p-2 rounded"
-                />
-                <p className="text-xs text-gray-500 mt-4">
-                  Escanear este código redirige al formulario de asistencia
-                </p>
+                <p className="text-sm text-gray-600 mb-4">Código QR generado: <span className="font-mono font-bold text-indigo-600">{createdCodigo}</span></p>
+                <img src={qrApi(attendanceUrl)} alt="QR preview" className="inline-block border-2 border-indigo-200 p-2 rounded" />
+                <p className="text-xs text-gray-500 mt-4">Escanear este código redirige al formulario de asistencia</p>
               </div>
             )}
           </div>
