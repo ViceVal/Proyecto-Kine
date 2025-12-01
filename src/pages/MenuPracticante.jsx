@@ -1,25 +1,62 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import textura from "../assets/TexturaHQ.png";
 
 export default function MenuPracticante() {
   const navigate = useNavigate();
 
-  // Datos temporales
-  const nombre = "Nombre";
-  const apellido = "Apellido";
+  // Estado para usuario logueado
+  const [usuario, setUsuario] = useState(null);
 
   // Estado para popup de cerrar sesión
   const [mostrarPopupLogout, setMostrarPopupLogout] = useState(false);
+
+  useEffect(() => {
+    // Obtener usuario de localStorage o sessionStorage
+    const userStorage = localStorage.getItem('kineapp_user') || sessionStorage.getItem('kineapp_user');
+    
+    if (userStorage) {
+      try {
+        const userData = JSON.parse(userStorage);
+        setUsuario(userData);
+        
+        // Si el usuario es supervisor, redirigir a su menú
+        if (userData.rol === 'supervisor') {
+          navigate('/supervisor/menu');
+        }
+      } catch (error) {
+        console.error('Error al parsear usuario:', error);
+        navigate('/login');
+      }
+    } else {
+      // Si no hay usuario, redirigir al login
+      navigate('/login');
+    }
+  }, [navigate]);
 
   const handleCerrarSesion = () => {
     setMostrarPopupLogout(true);
   };
 
   const confirmarCerrarSesion = () => {
+    // Limpiar sesión
+    localStorage.removeItem('kineapp_user');
+    sessionStorage.removeItem('kineapp_user');
     setMostrarPopupLogout(false);
     navigate("/login");
   };
+
+  // Mostrar loading mientras se carga el usuario
+  if (!usuario) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <div className="text-4xl mb-4">⏳</div>
+          <p className="text-gray-600">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -41,7 +78,12 @@ export default function MenuPracticante() {
         {/* Caja de bienvenida */}
         <div className="bg-white/90 rounded-2xl shadow-lg p-8 w-full max-w-md mb-8 text-center">
           <h3 className="text-2xl font-bold text-gray-900 mb-2">¡Bienvenido/a!</h3>
-          <p className="text-lg text-gray-700">{nombre} {apellido}</p>
+          <p className="text-lg text-gray-700">
+            {usuario?.nombre || usuario?.username || 'Practicante'}
+          </p>
+          {usuario?.username && (
+            <p className="text-sm text-gray-500 mt-1">@{usuario.username}</p>
+          )}
         </div>
 
         {/* CONTENEDOR DE BOTONES */}

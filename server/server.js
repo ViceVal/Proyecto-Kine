@@ -130,6 +130,57 @@ app.post('/api/qr_codes', async (req, res) => {
   }
 });
 
+// POST /api/login - autenticar usuario
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  console.log('🔐 Login attempt:', { username, password: '***' });
+
+  if (!username || !password) {
+    return res.status(400).json({ error: 'username y password son requeridos' });
+  }
+
+  try {
+    // Buscar usuario por username
+    const result = await pool.query(
+      'SELECT id_usuario, username, password_hash, nombre, rol FROM usuario WHERE username = $1',
+      [username]
+    );
+
+    console.log('📊 Query result:', { found: result.rows.length, username });
+
+    if (result.rows.length === 0) {
+      console.log('❌ Usuario no encontrado:', username);
+      return res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+
+    const user = result.rows[0];
+    console.log('👤 Usuario encontrado:', { username: user.username, rol: user.rol, password_hash: user.password_hash });
+
+    // Validar contraseña (comparación simple - en producción usar bcrypt)
+    if (password !== user.password_hash) {
+      console.log('❌ Contraseña incorrecta. Esperada:', user.password_hash, 'Recibida:', password);
+      return res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+
+    console.log('✅ Login exitoso:', user.username);
+
+    // Login exitoso
+    res.json({
+      success: true,
+      user: {
+        id_usuario: user.id_usuario,
+        username: user.username,
+        nombre: user.nombre,
+        rol: user.rol
+      }
+    });
+  } catch (error) {
+    console.error('POST /api/login error:', error);
+    res.status(500).json({ error: 'Error al autenticar', details: error.message });
+  }
+});
+
 // POST /api/validate-location - valida que el practicante esté dentro del edificio
 app.post('/api/validate-location', async (req, res) => {
   const { latitude, longitude, id_box } = req.body;

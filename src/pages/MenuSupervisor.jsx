@@ -4,27 +4,64 @@
  */
 
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import textura from "../assets/TexturaHQ.png";
 
 export default function MenuSupervisor() {
   const navigate = useNavigate();
 
-  // Datos del supervisor
-  const nombreSupervisor = "Daniela";
-  const apellidoSupervisor = "Villanueva";
+  // Estado para usuario logueado
+  const [usuario, setUsuario] = useState(null);
 
   // Estado para el popup de cierre de sesión
   const [mostrarPopupLogout, setMostrarPopupLogout] = useState(false);
+
+  useEffect(() => {
+    // Obtener usuario de localStorage o sessionStorage
+    const userStorage = localStorage.getItem('kineapp_user') || sessionStorage.getItem('kineapp_user');
+    
+    if (userStorage) {
+      try {
+        const userData = JSON.parse(userStorage);
+        setUsuario(userData);
+        
+        // Si el usuario es practicante, redirigir a su menú
+        if (userData.rol === 'practicante') {
+          navigate('/practicante/menu');
+        }
+      } catch (error) {
+        console.error('Error al parsear usuario:', error);
+        navigate('/login');
+      }
+    } else {
+      // Si no hay usuario, redirigir al login
+      navigate('/login');
+    }
+  }, [navigate]);
 
   const handleCerrarSesion = () => {
     setMostrarPopupLogout(true);
   };
 
   const confirmarCerrarSesion = () => {
+    // Limpiar sesión
+    localStorage.removeItem('kineapp_user');
+    sessionStorage.removeItem('kineapp_user');
     setMostrarPopupLogout(false);
     navigate("/login");
   };
+
+  // Mostrar loading mientras se carga el usuario
+  if (!usuario) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <div className="text-4xl mb-4">⏳</div>
+          <p className="text-gray-600">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -50,8 +87,11 @@ export default function MenuSupervisor() {
             ¡Bienvenido/a!
           </h3>
           <p className="text-lg text-gray-700">
-            {nombreSupervisor} {apellidoSupervisor}
+            {usuario?.nombre || usuario?.username || 'Supervisor'}
           </p>
+          {usuario?.username && (
+            <p className="text-sm text-gray-500 mt-1">@{usuario.username}</p>
+          )}
         </div>
 
         {/* CONTENEDOR DE LOS BOTONES */}
