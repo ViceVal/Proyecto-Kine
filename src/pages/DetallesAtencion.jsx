@@ -209,10 +209,10 @@ export default function DetallesAtencion() {
       }}
     >
       {/* HEADER */}
-      <div className="relative w-full bg-D2C9FF py-6 text-center shadow">
+      <div className="relative w-full bg-[#D2C9FF] py-6 text-center shadow">
         <button
           onClick={() => navigate(-1)}
-          className="absolute left-4 top-12 -translate-y-12 text-black text-2xl"
+          className="absolute left-4 top-1/2 -translate-y-1/2 text-black text-2xl"
         >
           ←
         </button>
@@ -279,7 +279,7 @@ export default function DetallesAtencion() {
           <h3 className="text-lg font-semibold text-gray-800 mb-2">
             Fecha de atención
           </h3>
-          <div className="bg-D2C9FF rounded-2xl p-4 shadow-md">
+          <div className="bg-[#D2C9FF] rounded-2xl p-4 shadow-md">
             <DatePicker
               onChange={setFecha}
               value={fecha}
@@ -296,7 +296,7 @@ export default function DetallesAtencion() {
           <h3 className="text-lg font-semibold text-gray-800 mb-2">
             Hora de atención
           </h3>
-          <div className="bg-D2C9FF rounded-2xl p-4 shadow-md overflow-visible relative">
+          <div className="bg-[#D2C9FF] rounded-2xl p-4 shadow-md overflow-visible relative">
             <TimePicker
               onChange={setHora}
               value={hora}
@@ -340,7 +340,7 @@ export default function DetallesAtencion() {
         <button
           onClick={handleRegistrar}
           disabled={registrando || !qrValidado || validandoQr}
-          className="w-full py-3 bg-1E6176 text-white text-lg font-semibold rounded-xl shadow-md active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed mb-10"
+          className="w-full py-3 bg-[#1E6176] text-white text-lg font-semibold rounded-xl shadow-md active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed mb-10"
         >
           {registrando ? "⏳ Registrando..." : validandoQr ? "⏳ Validando QR..." : !qrValidado ? "⚠️ QR no validado" : "Registrar"}
         </button>

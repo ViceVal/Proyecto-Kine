@@ -14,7 +14,7 @@ VALUES (
   gen_random_uuid(),
   'supervisor1',
   'admin123',
-  'Dr. Carlos Supervisor',
+  E'Dr. Carlos Martínez',
   'supervisor',
   now()
 )
@@ -28,7 +28,7 @@ VALUES (
   gen_random_uuid(),
   'practicante2',
   'practica456',
-  'María González',
+  E'María González',
   'practicante',
   now()
 )

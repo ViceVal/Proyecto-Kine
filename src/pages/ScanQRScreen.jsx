@@ -271,10 +271,10 @@ const ScanQRScreen = () => {
       }}
     >
       {/* HEADER */}
-      <div className="relative w-full bg-D2C9FF py-6 text-center shadow">
+      <div className="relative w-full bg-[#D2C9FF] py-6 text-center shadow">
         <button
           onClick={() => navigate(-1)}
-          className="absolute left-4 top-12 -translate-y-12 text-black text-2xl hover:scale-110 transition"
+          className="absolute left-4 top-1/2 -translate-y-1/2 text-black text-2xl hover:scale-110 transition"
         >
           ←
         </button>
@@ -285,16 +285,19 @@ const ScanQRScreen = () => {
       </div>
 
       {/* CONTENIDO */}
-      <div className="flex-1 px-6 pt-6 pb-8 overflow-y-auto flex flex-col items-center justify-start">
+      <div className="flex-1 px-6 pt-6 pb-8 overflow-y-auto flex flex-col items-center justify-center">
         {/* Scanner container - SIEMPRE renderizado pero oculto si no escanea */}
         <div
           id="qr-reader"
-          className={`w-full max-w-md mb-6 rounded-xl overflow-hidden transition-all ${
+          className={`w-full max-w-md mb-6 rounded-xl overflow-hidden transition-all mx-auto ${
             scanning ? "opacity-100 min-h-80" : "opacity-0 hidden min-h-0"
           }`}
           style={{
             minHeight: scanning ? "400px" : "0px",
             border: scanning ? "2px solid #1E6176" : "none",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
           }}
         />
 
@@ -303,7 +306,7 @@ const ScanQRScreen = () => {
           {!scanning ? (
             <button
               onClick={startScanning}
-              className="w-full py-4 bg-1E6176 text-white text-lg font-semibold rounded-xl shadow-md hover:bg-164d5e active:scale-95 transition"
+              className="w-full py-4 bg-[#1E6176] text-white text-lg font-semibold rounded-xl shadow-md hover:bg-[#164d5e] active:scale-95 transition"
             >
               Iniciar Escaneo
             </button>
