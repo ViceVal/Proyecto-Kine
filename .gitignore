@@ -13,6 +13,10 @@ dist-ssr
 *.local
 
 # Editor directories and files
+android/
+backend_changes/
+.github
+.vscode
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -22,3 +26,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# User files
+Show-ProjectStructure.ps1
+informe.txt
