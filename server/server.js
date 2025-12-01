@@ -12,10 +12,10 @@ app.use(express.json());
 // PostgreSQL connection pool
 const pool = new Pool({
   host: process.env.PGHOST || 'kine-app-db.ccnqye4wgpbx.us-east-1.rds.amazonaws.com',
-  port: parseInt(process.env.PGPORT || '5432', 10),
-  user: process.env.PGUSER || 'admin_kine',
-  password: process.env.PGPASSWORD || 'kineappdb',
-  database: process.env.PGDATABASE || 'kine_app',
+  port: parseInt(process.env.PGPORT, 10),
+  user: process.env.PGUSER ,
+  password: process.env.PGPASSWORD ,
+  database: process.env.PGDATABASE ,
   ssl: process.env.PGSSL === 'true' ? { rejectUnauthorized: false } : false,
   max: 10,
   idleTimeoutMillis: 30000,
@@ -218,6 +218,193 @@ app.post('/api/atencion', async (req, res) => {
   } catch (error) {
     console.error('POST /api/atencion error:', error);
     res.status(500).json({ error: 'Error al registrar atención', details: error.message });
+  }
+});
+
+// POST /api/attendance - registrar asistencia con validación de ubicación
+app.post('/api/attendance', async (req, res) => {
+  const { boxName, codigoqr, fecha, hora, modulo, tipoAtencion, procedimiento, latitude, longitude } = req.body || {};
+
+  // Validaciones básicas
+  if (!codigoqr) {
+    return res.status(400).json({ error: 'codigoqr es requerido' });
+  }
+  if (!fecha || !hora) {
+    return res.status(400).json({ error: 'fecha y hora son requeridos' });
+  }
+  if (!tipoAtencion || !procedimiento) {
+    return res.status(400).json({ error: 'tipoAtencion y procedimiento son requeridos' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // 1. Validar que el QR existe y está activo
+    const qrResult = await client.query(
+      'SELECT id_qr, id_box, codigo_qr, scheduled_at FROM qr_code WHERE codigo_qr = $1 AND activo = true LIMIT 1',
+      [codigoqr]
+    );
+
+    if (qrResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'QR code no encontrado o inactivo' });
+    }
+
+    const qrData = qrResult.rows[0];
+    const id_box = qrData.id_box;
+
+    // 2. Si se proporcionan coordenadas, validar ubicación (a menos que esté en modo demo)
+    const isDemoMode = process.env.DEMO_MODE === 'true';
+    
+    if (latitude && longitude && !isDemoMode) {
+      const boxResult = await client.query(
+        'SELECT latitud, longitud, radio_metros FROM box WHERE id_box = $1',
+        [id_box]
+      );
+
+      if (boxResult.rows.length > 0) {
+        const box = boxResult.rows[0];
+        
+        if (box.latitud && box.longitud) {
+          // Calcular distancia usando Haversine
+          const distResult = await client.query(
+            `SELECT 
+              6371 * acos(
+                cos(radians($1)) * cos(radians($2)) * 
+                cos(radians($3) - radians($4)) + 
+                sin(radians($1)) * sin(radians($2))
+              ) * 1000 as distance_meters`,
+            [latitude, box.latitud, longitude, box.longitud]
+          );
+
+          const distance = distResult.rows[0].distance_meters;
+          const allowedRadius = box.radio_metros || 50;
+
+          if (distance > allowedRadius) {
+            await client.query('ROLLBACK');
+            return res.status(403).json({ 
+              error: 'location_out_of_range',
+              message: `Estás fuera del área autorizada. Distancia: ${Math.round(distance)}m, permitido: ${allowedRadius}m`
+            });
+          }
+        }
+      }
+    } else if (isDemoMode) {
+      console.log('⚠️ DEMO_MODE activo: omitiendo validación de ubicación');
+    }
+
+    // 3. Registrar la asistencia en la tabla attendance (o similar)
+    // Nota: ajusta el nombre de la tabla y campos según tu esquema de BD
+    const insertResult = await client.query(
+      `INSERT INTO attendance 
+        (id_attendance, id_qr, box_name, fecha, hora, modulo, tipo_atencion, procedimiento, ubicacion, fecha_registro)
+       VALUES 
+        (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, 
+         ${latitude && longitude ? 'ST_SetSRID(ST_MakePoint($8, $9), 4326)' : 'NULL'},
+         now())
+       RETURNING id_attendance, fecha_registro`,
+      latitude && longitude 
+        ? [qrData.id_qr, boxName || modulo, fecha, hora, modulo, tipoAtencion, procedimiento, longitude, latitude]
+        : [qrData.id_qr, boxName || modulo, fecha, hora, modulo, tipoAtencion, procedimiento]
+    );
+
+    await client.query('COMMIT');
+
+    res.status(201).json({
+      success: true,
+      id_attendance: insertResult.rows[0].id_attendance,
+      timestamp: insertResult.rows[0].fecha_registro,
+      message: 'Asistencia registrada exitosamente'
+    });
+
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    console.error('POST /api/attendance error:', error);
+    res.status(500).json({ error: 'Error al registrar asistencia', details: error.message });
+  } finally {
+    client.release();
+  }
+});
+
+// GET /api/attendance/:id - obtener detalles de una asistencia
+app.get('/api/attendance/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query(
+      `SELECT 
+        a.id_attendance,
+        a.box_name,
+        a.fecha,
+        a.hora,
+        a.modulo,
+        a.tipo_atencion,
+        a.procedimiento,
+        a.fecha_registro,
+        ST_X(a.ubicacion) as longitude,
+        ST_Y(a.ubicacion) as latitude,
+        q.codigo_qr
+       FROM attendance a
+       LEFT JOIN qr_code q ON a.id_qr = q.id_qr
+       WHERE a.id_attendance = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Asistencia no encontrada' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('GET /api/attendance/:id error:', error);
+    res.status(500).json({ error: 'Error al obtener asistencia', details: error.message });
+  }
+});
+
+// GET /api/attendance - listar todas las asistencias (con filtros opcionales)
+app.get('/api/attendance', async (req, res) => {
+  const { fecha, boxName, limit = 50, offset = 0 } = req.query;
+
+  try {
+    let query = `
+      SELECT 
+        a.id_attendance,
+        a.box_name,
+        a.fecha,
+        a.hora,
+        a.modulo,
+        a.tipo_atencion,
+        a.procedimiento,
+        a.fecha_registro,
+        q.codigo_qr
+      FROM attendance a
+      LEFT JOIN qr_code q ON a.id_qr = q.id_qr
+      WHERE 1=1
+    `;
+    const params = [];
+    let paramCount = 0;
+
+    if (fecha) {
+      paramCount++;
+      query += ` AND a.fecha = $${paramCount}`;
+      params.push(fecha);
+    }
+
+    if (boxName) {
+      paramCount++;
+      query += ` AND a.box_name ILIKE $${paramCount}`;
+      params.push(`%${boxName}%`);
+    }
+
+    query += ` ORDER BY a.fecha_registro DESC LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
+    params.push(parseInt(limit, 10), parseInt(offset, 10));
+
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('GET /api/attendance error:', error);
+    res.status(500).json({ error: 'Error al listar asistencias', details: error.message });
   }
 });
 
