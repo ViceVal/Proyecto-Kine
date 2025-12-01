@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import textura from '../assets/TexturaHQ.png';
 import DatePicker from 'react-date-picker';
@@ -13,30 +13,45 @@ export default function DetallesAtencion() {
   const location = useLocation();
 
   const [fecha, setFecha] = useState(null);
-  const [hora, setHora] = useState('14:00');
+  const [hora, setHora] = useState('20:00');
   const [tipoAtencion, setTipoAtencion] = useState('');
   const [procedimiento, setProcedimiento] = useState('');
   const [registrando, setRegistrando] = useState(false);
+  const [moduloNumero, setModuloNumero] = useState('');
+  const [codigoqr, setCodigoqr] = useState(null);
 
-  const moduloInicial = useMemo(() => {
-    if (!location) return '';
+  useEffect(() => {
+    // Defensive: ensure location and URLSearchParams are available
+    if (!location) return;
     try {
-      const search = location.search ?? '';
+      const search = location.search ?? (typeof window !== "undefined" ? window.location.search : "");
       const params = new URLSearchParams(search);
-      return params.get('boxName') || params.get('boxId') || '';
-    } catch {
-      return '';
-    }
-  }, [location]);
-
-  const [moduloNumero, setModuloNumero] = useState(moduloInicial);
-
-  const codigoqr = useMemo(() => {
-    try {
-      const params = new URLSearchParams(location.search ?? '');
-      return params.get('codigoqr') || null;
-    } catch {
-      return null;
+      
+      // Leer boxName o boxId
+      const boxName = params.get("boxName");
+      const boxId = params.get("boxId");
+      if (boxName) setModuloNumero(boxName);
+      else if (boxId) setModuloNumero(boxId);
+      
+      // Leer codigoqr
+      const codigoqrParam = params.get("codigoqr");
+      if (codigoqrParam) setCodigoqr(codigoqrParam);
+      
+      // Leer fecha del QR (formato: "2025-12-01")
+      const fechaParam = params.get("fecha");
+      if (fechaParam) {
+        // Convertir string "2025-12-01" a Date object para DatePicker
+        const [year, month, day] = fechaParam.split('-').map(Number);
+        setFecha(new Date(year, month - 1, day)); // month es 0-indexed
+      }
+      
+      // Leer hora del QR (formato: "14:30")
+      const horaParam = params.get("hora");
+      if (horaParam) {
+        setHora(horaParam); // TimePicker acepta string "HH:mm"
+      }
+    } catch (e) {
+      console.error('Error parsing URL params:', e);
     }
   }, [location]);
 
@@ -115,24 +130,25 @@ export default function DetallesAtencion() {
       backgroundSize: 'cover',
       backgroundPosition: 'center',
     }}>
-      <div className="relative w-full bg-[#B3CCFA] py-6 text-center shadow">
+      <div className="relative w-full bg-[#D2C9FF] py-6 text-center shadow">
         <button
           onClick={() => navigate(-1)}
           className="absolute left-4 top-1/2 -translate-y-1/2 text-black text-2xl"
         >
           ←
         </button>
-        <h1 className="text-3xl font-bold text-gray-900 mb-1">KineApp</h1>
-        <h2 className="text-gray-700 text-sm font-semibold">Detalles Atención</h2>
+        <h2 className="text-gray-800 text-xl font-semibold">
+          Detalles Atención
+        </h2>
       </div>
 
       <div className="flex-1 px-6 pt-6 pb-8 overflow-y-auto">
         <h3 className="text-lg font-semibold text-gray-800 mb-2 text-center">
-          Hora de la cita
+          Hora de atención
         </h3>
-        <div className="bg-[#D2C9FF] rounded-2xl p-4 mb-6 shadow-md">
+        <div className="bg-[#D2C9FF] rounded-2xl p-4 mb-6 shadow-md overflow-visible relative">
           <label className="text-white font-semibold ml-1">Hora</label>
-          <div className="bg-white border-2 border-purple-600 rounded-xl px-3 py-2 shadow-sm">
+          <div className="bg-white border-2 border-purple-600 rounded-xl px-3 py-2 shadow-sm overflow-visible relative">
             <TimePicker
               onChange={setHora}
               value={hora}
@@ -147,7 +163,7 @@ export default function DetallesAtencion() {
         <h3 className="text-lg font-semibold text-gray-800 mb-2">
           Fecha de atención
         </h3>
-        <div className="bg-[#B3CCFA] rounded-2xl p-4 mb-6 shadow-md">
+        <div className="bg-[#D2C9FF] rounded-2xl p-4 mb-6 shadow-md">
           <label className="text-white font-semibold ml-1">Fecha</label>
           <div className="bg-white border-2 border-purple-600 rounded-xl px-3 py-2 shadow-sm">
             <DatePicker
@@ -162,13 +178,12 @@ export default function DetallesAtencion() {
         </div>
 
         <h3 className="text-lg font-semibold text-gray-800 mb-2">
-          N° Módulo / Box
+          N° Módulo
         </h3>
         <input
           type="text"
           value={moduloNumero}
           onChange={(e) => setModuloNumero(e.target.value)}
-          placeholder="Ej: Box 1"
           className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 shadow-sm mb-6"
         />
 
@@ -197,7 +212,7 @@ export default function DetallesAtencion() {
         <button
           onClick={handleRegistrar}
           disabled={registrando}
-          className="w-full py-3 bg-[#1E6176] text-white text-lg font-semibold rounded-xl shadow-md active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-3 bg-[#1E6176] text-white text-lg font-semibold rounded-xl shadow-md active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed mb-10"
         >
           {registrando ? '⏳ Registrando...' : 'Registrar'}
         </button>

@@ -22,19 +22,16 @@ Node.js + Express server para gestionar boxes y códigos QR de la aplicación Ki
 ### Setup
 
 1. Navega a la carpeta del servidor:
-
 ```bash
 cd server
 ```
 
 2. Instala dependencias:
-
 ```bash
 npm install
 ```
 
 3. Crea un archivo `.env` con tus credenciales:
-
 ```env
 PGHOST=kine-app-db.ccnqye4wgpbx.us-east-1.rds.amazonaws.com
 PGPORT=5432
@@ -48,13 +45,11 @@ PORT=4000
 ### Ejecución
 
 **Modo desarrollo (con auto-reload):**
-
 ```bash
 npm run dev
 ```
 
 **Modo producción:**
-
 ```bash
 npm start
 ```
@@ -64,11 +59,9 @@ El servidor arrancará en `http://localhost:4000` (o el puerto definido en `PORT
 ## Endpoints
 
 ### GET `/health`
-
 Verifica que el servidor está activo.
 
 **Respuesta:**
-
 ```json
 { "status": "ok" }
 ```
@@ -76,11 +69,9 @@ Verifica que el servidor está activo.
 ---
 
 ### GET `/api/boxes`
-
 Obtiene la lista de boxes desde la BD.
 
 **Respuesta (200):**
-
 ```json
 [
   { "id_box": "...", "nombre": "Sala ira", "descripcion": "Sala IRA" },
@@ -89,17 +80,14 @@ Obtiene la lista de boxes desde la BD.
 ```
 
 **Errores:**
-
 - 500: Error al consultar la BD.
 
 ---
 
 ### POST `/api/qr_codes`
-
 Crea un nuevo código QR asociado a un box. Previene duplicados si se especifica `scheduledAt`.
 
 **Body:**
-
 ```json
 {
   "boxName": "Sala ira",
@@ -108,7 +96,6 @@ Crea un nuevo código QR asociado a un box. Previene duplicados si se especifica
 ```
 
 **Respuesta (201 — creado):**
-
 ```json
 {
   "id_qr": "...",
@@ -120,7 +107,6 @@ Crea un nuevo código QR asociado a un box. Previene duplicados si se especifica
 ```
 
 **Respuesta (409 — duplicado):**
-
 ```json
 {
   "error": "duplicate",
@@ -132,7 +118,6 @@ Crea un nuevo código QR asociado a un box. Previene duplicados si se especifica
 ```
 
 **Errores:**
-
 - 400: `boxName` no proporcionado.
 - 404: Box no existe.
 - 500: Error al crear el QR.
@@ -140,15 +125,12 @@ Crea un nuevo código QR asociado a un box. Previene duplicados si se especifica
 ---
 
 ### GET `/api/qr_codes/:codigo_qr`
-
 Valida un código QR y obtiene la información del box asociado.
 
 **Parámetros:**
-
 - `codigo_qr` — el código QR a validar (ej. `QR-Sala-ira-ABC12345`).
 
 **Respuesta (200):**
-
 ```json
 {
   "id_qr": "...",
@@ -161,7 +143,6 @@ Valida un código QR y obtiene la información del box asociado.
 ```
 
 **Errores:**
-
 - 404: Código QR no encontrado o inactivo.
 - 500: Error al validar.
 
@@ -172,7 +153,6 @@ Valida un código QR y obtiene la información del box asociado.
 ### SSL/TLS para PostgreSQL
 
 Si tu BD requiere SSL:
-
 ```env
 PGSSL=true
 ```
@@ -182,7 +162,6 @@ El servidor asume `rejectUnauthorized=false`; para producción usa certificados 
 ### Pool de conexiones
 
 Ajusta en `server.js`:
-
 ```javascript
 const pool = new Pool({
   // ... otras config
@@ -195,15 +174,12 @@ const pool = new Pool({
 ## Operaciones de Base de Datos
 
 ### Insertar boxes
-
 Usa el script SQL:
-
 ```bash
 psql --host=... --username=... --dbname=postgres -f ../scripts/insert_boxes.sql
 ```
 
 ### Migración (agregar columna scheduled_at)
-
 ```bash
 psql --host=... --username=... --dbname=postgres -f ../scripts/migration_add_scheduled_at.sql
 ```
@@ -211,13 +187,11 @@ psql --host=... --username=... --dbname=postgres -f ../scripts/migration_add_sch
 ## Testing
 
 ### Prueba de boxes
-
 ```bash
 curl http://localhost:4000/api/boxes
 ```
 
 ### Crear un QR
-
 ```bash
 curl -X POST http://localhost:4000/api/qr_codes \
   -H "Content-Type: application/json" \
@@ -225,7 +199,6 @@ curl -X POST http://localhost:4000/api/qr_codes \
 ```
 
 ### Validar un QR
-
 ```bash
 curl http://localhost:4000/api/qr_codes/QR-Sala-ira-ABC12345
 ```
@@ -240,21 +213,17 @@ curl http://localhost:4000/api/qr_codes/QR-Sala-ira-ABC12345
 ## Troubleshooting
 
 ### Error: `connect ECONNREFUSED`
-
 - Verifica que PostgreSQL está activo y que `PGHOST`/`PGPORT` son correctos.
 
 ### Error: `password authentication failed`
-
 - Verifica credenciales en `.env`.
 
 ### Error: `undefined` en `PGHOST`
-
 - Asegúrate de que `dotenv` está cargando `.env` correctamente (debe estar en la raíz de `server/`).
 
 ## Ambiente de Desarrollo
 
 Para desarrollo rápido, usa `npm run dev`:
-
 ```bash
 cd server
 npm install
