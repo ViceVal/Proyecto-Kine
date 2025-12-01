@@ -9,6 +9,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Asegurar que las respuestas usen UTF-8
+app.use((req, res, next) => {
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  next();
+});
+
 // PostgreSQL connection pool
 const pool = new Pool({
   host: process.env.PGHOST || 'kine-app-db.ccnqye4wgpbx.us-east-1.rds.amazonaws.com',

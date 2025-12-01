@@ -7,6 +7,32 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import textura from "../assets/TexturaHQ.png";
 
+// Función para corregir caracteres corruptos comunes
+const fixEncoding = (text) => {
+  if (!text) return text;
+  return text
+    .replace(/Mar¡a/gi, 'María')
+    .replace(/Gonz lez/gi, 'González')
+    .replace(/Gonz.lez/gi, 'González')
+    .replace(/Mart¡nez/gi, 'Martínez')
+    .replace(/Mart.nez/gi, 'Martínez')
+    .replace(/Jos‚/gi, 'José')
+    .replace(/Jos./gi, 'José')
+    .replace(/Andr‚s/gi, 'Andrés')
+    .replace(/P‚rez/gi, 'Pérez')
+    .replace(/Fern ndez/gi, 'Fernández')
+    .replace(/L¢pez/gi, 'López')
+    .replace(/S nchez/gi, 'Sánchez')
+    // Patrones generales de vocales con acentos corruptos
+    .replace(/([A-Z][a-z]*) ([a-z])/g, (match, p1, p2) => {
+      // Si hay un espacio sospechoso entre mayúscula y minúscula
+      const fixes = {
+        'a': 'á', 'e': 'é', 'i': 'í', 'o': 'ó', 'u': 'ú'
+      };
+      return p1 + (fixes[p2] || p2);
+    });
+};
+
 export default function MenuSupervisor() {
   const navigate = useNavigate();
 
@@ -87,7 +113,7 @@ export default function MenuSupervisor() {
             ¡Bienvenido/a!
           </h3>
           <p className="text-lg text-gray-700">
-            {usuario?.nombre || usuario?.username || 'Supervisor'}
+            {fixEncoding(usuario?.nombre) || usuario?.username || 'Supervisor'}
           </p>
           {usuario?.username && (
             <p className="text-sm text-gray-500 mt-1">@{usuario.username}</p>
