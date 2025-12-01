@@ -345,27 +345,28 @@ app.post('/api/attendance', async (req, res) => {
       console.log('⚠️ DEMO_MODE activo: omitiendo validación de ubicación');
     }
 
-    // 3. Registrar la asistencia en la tabla attendance (o similar)
-    // Nota: ajusta el nombre de la tabla y campos según tu esquema de BD
-    const insertResult = await client.query(
-      `INSERT INTO attendance 
-        (id_attendance, id_qr, box_name, fecha, hora, modulo, tipo_atencion, procedimiento, ubicacion, fecha_registro)
+    // 3. Registrar la asistencia en la tabla atencion
+    let insertResult;
+    
+    // Si no hay coordenadas (modo demo), usar coordenadas por defecto (0,0)
+    const finalLongitude = longitude || 0;
+    const finalLatitude = latitude || 0;
+    
+    insertResult = await client.query(
+      `INSERT INTO atencion 
+        (id_atencion, id_qr, id_box, ubicacion, accion_realizada, observaciones)
        VALUES 
-        (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, 
-         ${latitude && longitude ? 'ST_SetSRID(ST_MakePoint($8, $9), 4326)' : 'NULL'},
-         now())
-       RETURNING id_attendance, fecha_registro`,
-      latitude && longitude 
-        ? [qrData.id_qr, boxName || modulo, fecha, hora, modulo, tipoAtencion, procedimiento, longitude, latitude]
-        : [qrData.id_qr, boxName || modulo, fecha, hora, modulo, tipoAtencion, procedimiento]
+        (gen_random_uuid(), $1, $2, ST_SetSRID(ST_MakePoint($3, $4), 4326), $5, $6)
+       RETURNING id_atencion, fecha_hora_registro`,
+      [qrData.id_qr, id_box, finalLongitude, finalLatitude, `${tipoAtencion} - ${procedimiento}`, `Fecha: ${fecha}, Hora: ${hora}, Módulo: ${modulo || boxName}`]
     );
 
     await client.query('COMMIT');
 
     res.status(201).json({
       success: true,
-      id_attendance: insertResult.rows[0].id_attendance,
-      timestamp: insertResult.rows[0].fecha_registro,
+      id_atencion: insertResult.rows[0].id_atencion,
+      timestamp: insertResult.rows[0].fecha_hora_registro,
       message: 'Asistencia registrada exitosamente'
     });
 
@@ -385,20 +386,19 @@ app.get('/api/attendance/:id', async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT 
-        a.id_attendance,
-        a.box_name,
-        a.fecha,
-        a.hora,
-        a.modulo,
-        a.tipo_atencion,
-        a.procedimiento,
-        a.fecha_registro,
+        a.id_atencion,
+        a.fecha_hora_registro,
+        a.accion_realizada,
+        a.duracion_min,
+        a.observaciones,
         ST_X(a.ubicacion) as longitude,
         ST_Y(a.ubicacion) as latitude,
-        q.codigo_qr
-       FROM attendance a
+        q.codigo_qr,
+        b.nombre as box_name
+       FROM atencion a
        LEFT JOIN qr_code q ON a.id_qr = q.id_qr
-       WHERE a.id_attendance = $1`,
+       LEFT JOIN box b ON a.id_box = b.id_box
+       WHERE a.id_atencion = $1`,
       [id]
     );
 
@@ -415,40 +415,33 @@ app.get('/api/attendance/:id', async (req, res) => {
 
 // GET /api/attendance - listar todas las asistencias (con filtros opcionales)
 app.get('/api/attendance', async (req, res) => {
-  const { fecha, boxName, limit = 50, offset = 0 } = req.query;
+  const { boxName, limit = 50, offset = 0 } = req.query;
 
   try {
     let query = `
       SELECT 
-        a.id_attendance,
-        a.box_name,
-        a.fecha,
-        a.hora,
-        a.modulo,
-        a.tipo_atencion,
-        a.procedimiento,
-        a.fecha_registro,
-        q.codigo_qr
-      FROM attendance a
+        a.id_atencion,
+        a.fecha_hora_registro,
+        a.accion_realizada,
+        a.duracion_min,
+        a.observaciones,
+        q.codigo_qr,
+        b.nombre as box_name
+      FROM atencion a
       LEFT JOIN qr_code q ON a.id_qr = q.id_qr
+      LEFT JOIN box b ON a.id_box = b.id_box
       WHERE 1=1
     `;
     const params = [];
     let paramCount = 0;
 
-    if (fecha) {
-      paramCount++;
-      query += ` AND a.fecha = $${paramCount}`;
-      params.push(fecha);
-    }
-
     if (boxName) {
       paramCount++;
-      query += ` AND a.box_name ILIKE $${paramCount}`;
+      query += ` AND b.nombre ILIKE $${paramCount}`;
       params.push(`%${boxName}%`);
     }
 
-    query += ` ORDER BY a.fecha_registro DESC LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
+    query += ` ORDER BY a.fecha_hora_registro DESC LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
     params.push(parseInt(limit, 10), parseInt(offset, 10));
 
     const result = await pool.query(query, params);

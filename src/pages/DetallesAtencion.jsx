@@ -19,67 +19,114 @@ export default function DetallesAtencion() {
   const [registrando, setRegistrando] = useState(false);
   const [moduloNumero, setModuloNumero] = useState("");
   const [codigoqr, setCodigoqr] = useState(null);
+  const [idBox, setIdBox] = useState(null);
+  const [qrValidado, setQrValidado] = useState(false);
+  const [validandoQr, setValidandoQr] = useState(false);
 
   const apiBase = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
-  // Efecto para leer parámetros de la URL
+  // Efecto para leer y validar parámetros de la URL
   useEffect(() => {
-  if (!location) return;
+    const validarQR = async () => {
+      if (!location) return;
 
-  try {
-    const search = location.search ?? (typeof window !== "undefined" ? window.location.search : "");
-    
-    // 🔍 DEBUG: Ver la URL completa
-    console.log("🔍 URL completa recibida:", window.location.href);
-    console.log("🔍 Search string:", search);
-    
-    const params = new URLSearchParams(search);
-    
-    // 🔍 DEBUG: Ver TODOS los parámetros
-    console.log("🔍 Todos los parámetros:", Object.fromEntries(params.entries()));
-    
-    const boxName = params.get("boxName");
-    const boxId = params.get("boxId");
-    const codigoqrParam = params.get("codigoqr") || params.get("codigo_qr");
-    const fechaParam = params.get("fecha");
-    const horaParam = params.get("hora");
+      try {
+        const search = location.search ?? (typeof window !== "undefined" ? window.location.search : "");
+        
+        console.log("🔍 URL completa recibida:", window.location.href);
+        console.log("🔍 Search string:", search);
+        
+        const params = new URLSearchParams(search);
+        console.log("🔍 Todos los parámetros:", Object.fromEntries(params.entries()));
+        
+        const boxName = params.get("boxName");
+        const boxIdParam = params.get("boxId") || params.get("idBox");
+        const codigoqrParam = params.get("codigoqr") || params.get("codigo_qr");
+        const fechaParam = params.get("fecha");
+        const horaParam = params.get("hora");
 
-    console.log("✅ Parámetros recibidos:", {
-      boxName,
-      boxId,
-      codigoqrParam,
-      fechaParam,
-      horaParam,
-    });
+        console.log("✅ Parámetros recibidos:", {
+          boxName,
+          boxIdParam,
+          codigoqrParam,
+          fechaParam,
+          horaParam,
+        });
 
-      // Establecer módulo
-      if (boxName) setModuloNumero(boxName);
-      else if (boxId) setModuloNumero(boxId);
+        // Establecer módulo
+        if (boxName) setModuloNumero(boxName);
+        else if (boxIdParam) setModuloNumero(boxIdParam);
 
-      // Establecer código QR
-      if (codigoqrParam) {
-        setCodigoqr(codigoqrParam);
-        console.log("✅ codigoqr establecido:", codigoqrParam);
-      } else {
-        console.warn("⚠️ No se encontró parámetro codigoqr ni codigo_qr");
+        // Establecer ID del box
+        if (boxIdParam) setIdBox(boxIdParam);
+
+        // Establecer fecha
+        if (fechaParam) {
+          const [year, month, day] = fechaParam.split("-").map(Number);
+          setFecha(new Date(year, month - 1, day));
+          console.log("✅ fecha establecida:", new Date(year, month - 1, day));
+        }
+
+        // Establecer hora
+        if (horaParam) {
+          setHora(horaParam);
+          console.log("✅ hora establecida:", horaParam);
+        }
+
+        // Validar código QR con el servidor
+        if (codigoqrParam) {
+          console.log("🔍 Validando QR con el servidor...");
+          setValidandoQr(true);
+
+          try {
+            const response = await fetch(
+              `${apiBase}/api/qr_codes/${encodeURIComponent(codigoqrParam)}`
+            );
+
+            if (!response.ok) {
+              const errorData = await response.json();
+              
+              if (response.status === 404) {
+                throw new Error(
+                  `El QR "${codigoqrParam}" no existe en la base de datos o está inactivo.\n\nPor favor, genera un nuevo QR o verifica que el código sea correcto.`
+                );
+              }
+              
+              throw new Error(errorData.error || "QR no válido");
+            }
+
+            const qrData = await response.json();
+            console.log("✅ QR validado en servidor:", qrData);
+
+            // Verificar que el QR pertenece al box correcto (si tenemos idBox)
+            if (boxIdParam && qrData.id_box !== boxIdParam) {
+              throw new Error("El QR no corresponde al box indicado");
+            }
+
+            // QR válido
+            setCodigoqr(codigoqrParam);
+            setQrValidado(true);
+            console.log("✅ QR confirmado y validado:", codigoqrParam);
+          } catch (error) {
+            console.error("❌ Error al validar QR:", error);
+            alert(`⚠️ Error: ${error.message}\n\nEl QR no es válido o no existe en la base de datos.`);
+            setQrValidado(false);
+            // No establecer el codigoqr si la validación falla
+          } finally {
+            setValidandoQr(false);
+          }
+        } else {
+          console.warn("⚠️ No se encontró parámetro codigoqr");
+          setQrValidado(false);
+        }
+      } catch (e) {
+        console.error("❌ Error parsing URL params:", e);
+        setValidandoQr(false);
       }
+    };
 
-      // Establecer fecha
-      if (fechaParam) {
-        const [year, month, day] = fechaParam.split("-").map(Number);
-        setFecha(new Date(year, month - 1, day));
-        console.log("✅ fecha establecida:", new Date(year, month - 1, day));
-      }
-
-      // Establecer hora
-      if (horaParam) {
-        setHora(horaParam);
-        console.log("✅ hora establecida:", horaParam);
-      }
-    } catch (e) {
-      console.error("❌ Error parsing URL params:", e);
-    }
-  }, [location]);
+    validarQR();
+  }, [location, apiBase]);
 
   const handleRegistrar = async () => {
     if (!fecha) {
@@ -193,22 +240,37 @@ export default function DetallesAtencion() {
         {/* Código QR */}
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-2">
-            Código QR {codigoqr ? "✅" : "⚠️"}
+            Código QR {validandoQr ? "⏳" : qrValidado ? "✅" : "⚠️"}
           </h3>
           <div
             className={`w-full border-2 rounded-xl px-4 py-3 shadow-sm ${
-              codigoqr
+              validandoQr
+                ? "bg-blue-50 border-blue-500"
+                : qrValidado
                 ? "bg-green-50 border-green-500"
                 : "bg-red-50 border-red-500"
             }`}
           >
-            <p
-              className={`font-semibold break-all ${
-                codigoqr ? "text-green-700" : "text-red-700"
-              }`}
-            >
-              {codigoqr || "No escaneado - Por favor escanea el QR"}
-            </p>
+            {validandoQr ? (
+              <p className="text-blue-700 font-semibold">
+                ⏳ Validando QR con el servidor...
+              </p>
+            ) : (
+              <>
+                <p
+                  className={`font-semibold break-all ${
+                    qrValidado ? "text-green-700" : "text-red-700"
+                  }`}
+                >
+                  {codigoqr || "No escaneado - Por favor escanea el QR"}
+                </p>
+                {qrValidado && (
+                  <p className="text-green-600 text-sm mt-2">
+                    ✓ QR verificado en base de datos
+                  </p>
+                )}
+              </>
+            )}
           </div>
         </div>
 
@@ -277,10 +339,10 @@ export default function DetallesAtencion() {
         {/* Botón Registrar */}
         <button
           onClick={handleRegistrar}
-          disabled={registrando || !codigoqr}
+          disabled={registrando || !qrValidado || validandoQr}
           className="w-full py-3 bg-1E6176 text-white text-lg font-semibold rounded-xl shadow-md active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed mb-10"
         >
-          {registrando ? "Registrando..." : "Registrar"}
+          {registrando ? "⏳ Registrando..." : validandoQr ? "⏳ Validando QR..." : !qrValidado ? "⚠️ QR no validado" : "Registrar"}
         </button>
       </div>
     </div>

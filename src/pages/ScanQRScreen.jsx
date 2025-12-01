@@ -32,76 +32,91 @@ const ScanQRScreen = () => {
       }
 
       try {
-        // 1. Intentar parsear como URL completa
+        console.log("🔍 Validando QR con el servidor...");
+
+        let codigoQrAValidar = decodedText;
+        let esURL = false;
+
+        // 1. Verificar si es una URL
         try {
           const url = new URL(decodedText);
-          const path = url.pathname + url.search;
-          console.log("🔗 URL detectada, navegando a:", path);
-          navigate(path);
-          return;
-        } catch {
-          // No es URL, continuar
+          esURL = true;
+          
+          // Extraer el parámetro codigo_qr o codigoqr de la URL
+          const params = new URLSearchParams(url.search);
+          const codigoQrParam = params.get('codigo_qr') || params.get('codigoqr');
+          
+          if (codigoQrParam) {
+            codigoQrAValidar = codigoQrParam;
+            console.log("📋 Código QR extraído de URL:", codigoQrAValidar);
+          } else {
+            throw new Error(
+              "La URL no contiene el parámetro 'codigo_qr' o 'codigoqr'.\n\nURL escaneada: " + decodedText
+            );
+          }
+        } catch (urlError) {
+          if (esURL) {
+            // Era una URL pero no se pudo procesar
+            throw urlError;
+          }
+          // No es una URL, usar el texto tal cual
+          console.log("📝 QR de texto simple detectado:", decodedText);
         }
 
-        // 2. Intentar parsear como JSON
-        try {
-          const qrData = JSON.parse(decodedText);
-          const boxName = qrData.boxName || "Box Sin Especificar";
-          const codigoqr = qrData.codigoqr || qrData.code || decodedText;
-          const fecha = qrData.fecha || "";
-          const hora = qrData.hora || "";
-
-          console.log("📋 JSON detectado:", { boxName, codigoqr, fecha, hora });
-          navigate(
-            `/detalles-atencion?boxName=${encodeURIComponent(boxName)}&codigoqr=${encodeURIComponent(codigoqr)}&fecha=${fecha}&hora=${hora}`
-          );
-          return;
-        } catch {
-          // No es JSON válido
-        }
-
-        // 3. QR simple: consultar al servidor
-        console.log("🔍 Código QR simple detectado, consultando servidor...");
-
+        // Validar QR con el servidor
         const response = await fetch(
-          `${apiBase}/api/qrcodes/${encodeURIComponent(decodedText)}`
+          `${apiBase}/api/qr_codes/${encodeURIComponent(codigoQrAValidar)}`
         );
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || "QR no válido");
+          
+          if (response.status === 404) {
+            throw new Error(
+              `QR no encontrado o inactivo.\n\nCódigo escaneado: "${codigoQrAValidar}"\n\nVerifica que el QR esté registrado en el sistema.`
+            );
+          }
+          
+          throw new Error(errorData.error || "Error al validar QR");
         }
 
         const qrData = await response.json();
-        console.log("✅ Datos del QR obtenidos:", qrData);
+        console.log("✅ QR validado exitosamente:", qrData);
 
-        // Extraer datos necesarios
+        // Extraer datos del QR
         const boxName = qrData.nombre || "Box Sin Especificar";
-        const codigoqr = qrData.codigoqr;
+        const codigoqr = qrData.codigo_qr;
+        const idBox = qrData.id_box;
 
-        // Extraer fecha y hora del scheduledAt (formato: "2025-12-01T14:30:00")
+        // Extraer fecha y hora del scheduled_at
         let fecha = "";
         let hora = "";
-        if (qrData.scheduledat) {
-          const dt = new Date(qrData.scheduledat);
+        if (qrData.scheduled_at) {
+          const dt = new Date(qrData.scheduled_at);
           fecha = dt.toISOString().split("T")[0]; // "2025-12-01"
           hora = dt.toTimeString().slice(0, 5); // "14:30"
         }
 
-        console.log("📦 Parámetros a enviar:", {
+        console.log("📦 Navegando con datos validados:", {
           boxName,
           codigoqr,
+          idBox,
           fecha,
           hora,
         });
 
-        // Navegar con todos los parámetros
+        // Navegar a DetallesAtencion con todos los parámetros
         navigate(
-          `/detalles-atencion?boxName=${encodeURIComponent(boxName)}&codigoqr=${encodeURIComponent(codigoqr)}&fecha=${fecha}&hora=${hora}`
+          `/detalles-atencion?boxName=${encodeURIComponent(boxName)}&codigoqr=${encodeURIComponent(codigoqr)}&idBox=${idBox}&fecha=${fecha}&hora=${hora}`
         );
       } catch (err) {
-        console.error("❌ Error al procesar el QR:", err);
+        console.error("❌ Error al validar el QR:", err);
         setError(`Error: ${err.message}`);
+        // Reiniciar después de 3 segundos para permitir escanear de nuevo
+        setTimeout(() => {
+          setError(null);
+          setResult(null);
+        }, 3000);
       }
     },
     [navigate, apiBase]
@@ -315,7 +330,13 @@ const ScanQRScreen = () => {
         {error && (
           <div className="w-full max-w-md mt-6 p-4 bg-red-50 border-2 border-red-300 rounded-xl animate-fadeUp">
             <p className="text-red-700 font-semibold">❌ Error:</p>
-            <p className="text-red-600 text-sm">{error}</p>
+            <p className="text-red-600 text-sm whitespace-pre-line">{error}</p>
+            <button
+              onClick={() => navigate('/generador-qr')}
+              className="mt-3 w-full py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition"
+            >
+              🔳 Ir al Generador de QR
+            </button>
           </div>
         )}
 
